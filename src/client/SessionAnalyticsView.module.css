@@ -1,0 +1,177 @@
+/* Session Analysis tab — semantic --dsw-* tokens only, no literal colors. */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: 100%;
+  overflow: auto;
+  padding: 4px 2px;
+}
+
+.ranges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.range {
+  padding: 4px 12px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 999px;
+  background: var(--dsw-alias-button-elevated-fill);
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.range:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.rangeActive {
+  color: var(--dsw-alias-label-primary);
+  border-color: var(--dsw-alias-state-business-primary);
+  background: var(--dsw-alias-interactive-bg-hover);
+  font-weight: 600;
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+  padding: 10px 14px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 10px;
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.stat {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.statLabel {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+}
+
+.statValue {
+  color: var(--dsw-alias-label-primary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-size: 15px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sectionTitle {
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.emptyHint {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+}
+
+/* Tool-type distribution rows */
+.toolRow {
+  display: grid;
+  grid-template-columns: 110px 1fr 70px 70px;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.toolName {
+  color: var(--dsw-alias-label-primary);
+  font-family: var(--ds-font-family-code, monospace);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toolTrack {
+  height: 7px;
+  border-radius: 3px;
+  background: var(--dsw-alias-interactive-bg-hover);
+  overflow: hidden;
+}
+
+.toolFill {
+  height: 100%;
+  background: var(--dsw-alias-state-business-primary);
+  border-radius: 3px;
+}
+
+.toolCount {
+  color: var(--dsw-alias-label-secondary);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.toolDur {
+  color: var(--dsw-alias-label-primary);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Turn summary rows */
+.turnRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+}
+
+.turnHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.turnTime {
+  color: var(--dsw-alias-label-secondary);
+  font-size: 11px;
+}
+
+.turnDur {
+  color: var(--dsw-alias-label-primary);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.turnPrompt {
+  color: var(--dsw-alias-label-primary);
+  font-size: 13px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+}
+
+.turnTools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.toolTag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  background: var(--dsw-alias-button-elevated-fill);
+  color: var(--dsw-alias-label-secondary);
+  font-size: 11px;
+  font-family: var(--ds-font-family-code, monospace);
+}

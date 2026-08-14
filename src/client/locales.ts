@@ -68,6 +68,20 @@ export type WindowStatsKey =
   | 'detail.subagents'
   | 'value.tokPerSec'
   | 'value.ms'
+  | 'view.sessionAnalytics'
+  | 'range.10m'
+  | 'range.1h'
+  | 'range.1d'
+  | 'range.all'
+  | 'an.summary.toolCalls'
+  | 'an.summary.toolDuration'
+  | 'an.summary.turns'
+  | 'an.tools.title'
+  | 'an.tools.count'
+  | 'an.tools.duration'
+  | 'an.turns.title'
+  | 'an.turns.empty'
+  | 'an.noPrompt'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -137,6 +151,20 @@ export const zh: Record<WindowStatsKey, string> = {
   'detail.subagents': '子代理',
   'value.tokPerSec': '{n} tok/s',
   'value.ms': '{n} ms',
+  'view.sessionAnalytics': '会话分析',
+  'range.10m': '10 分钟',
+  'range.1h': '1 小时',
+  'range.1d': '1 天',
+  'range.all': '全部',
+  'an.summary.toolCalls': '工具调用',
+  'an.summary.toolDuration': '工具耗时',
+  'an.summary.turns': '轮次',
+  'an.tools.title': '工具类型分布',
+  'an.tools.count': '{n} 次',
+  'an.tools.duration': '耗时',
+  'an.turns.title': '任务摘要',
+  'an.turns.empty': '该时间范围内暂无活动',
+  'an.noPrompt': '（无用户输入）',
 }
 
 /** English dictionary. */
@@ -200,4 +228,18 @@ export const en: Record<WindowStatsKey, string> = {
   'detail.subagents': 'Subagents',
   'value.tokPerSec': '{n} tok/s',
   'value.ms': '{n} ms',
+  'view.sessionAnalytics': 'Session Analysis',
+  'range.10m': '10m',
+  'range.1h': '1h',
+  'range.1d': '1d',
+  'range.all': 'All',
+  'an.summary.toolCalls': 'Tool calls',
+  'an.summary.toolDuration': 'Tool duration',
+  'an.summary.turns': 'Turns',
+  'an.tools.title': 'Tool-type distribution',
+  'an.tools.count': '{n} calls',
+  'an.tools.duration': 'Duration',
+  'an.turns.title': 'Task summary',
+  'an.turns.empty': 'No activity in this range',
+  'an.noPrompt': '(no user input)',
 }

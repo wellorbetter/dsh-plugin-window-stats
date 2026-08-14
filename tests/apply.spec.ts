@@ -5,18 +5,25 @@ import { apply } from '../src/client/index.ts'
 interface FakeState {
   localeRegisterCalls: unknown[][]
   localeDisposed: boolean
-  slotsInjectKey: string | null
-  registerArgs: unknown[]
+  slotsInjectKeys: string[]
+  registrations: unknown[][]
   registerDisposed: boolean
   opened: string[]
+}
+
+interface RegistrationOptions {
+  name: string
+  id: string
+  order: number
+  inject?: () => { open: (id: string) => void }
 }
 
 function makeFake() {
   const state: FakeState = {
     localeRegisterCalls: [],
     localeDisposed: false,
-    slotsInjectKey: null,
-    registerArgs: [],
+    slotsInjectKeys: [],
+    registrations: [],
     registerDisposed: false,
     opened: [],
   }
@@ -41,12 +48,12 @@ function makeFake() {
     },
     slots: {
       inject: (name, cb) => {
-        state.slotsInjectKey = name
+        state.slotsInjectKeys.push(name)
         cb()
         return () => { state.registerDisposed = true }
       },
       register: (...args) => {
-        state.registerArgs = args
+        state.registrations.push(args)
         return () => { state.registerDisposed = true }
       },
     },
@@ -57,24 +64,29 @@ function makeFake() {
   return { ctx, state }
 }
 
+const optionsOf = (state: FakeState, id: string): RegistrationOptions =>
+  state.registrations.map(args => args[0] as RegistrationOptions).find(o => o.id === id) as RegistrationOptions
+
 describe('client apply', () => {
-  it('registers the windowStats locale and the conversation.view tab', () => {
+  it('registers the locale and both conversation.view tabs', () => {
     const { ctx, state } = makeFake()
     apply(ctx as never)
     expect(state.localeRegisterCalls.length).toBe(1)
     expect(state.localeRegisterCalls[0]?.[0]).toBe('windowStats')
-    expect(state.slotsInjectKey).toBe('conversation.view')
-    const options = state.registerArgs[0] as { name: string; id: string; order: number }
-    expect(options.name).toBe('conversation.view')
-    expect(options.id).toBe('windowStats')
-    expect(options.order).toBe(20)
+    expect(state.slotsInjectKeys).toEqual(['conversation.view', 'conversation.view'])
+    const overview = optionsOf(state, 'windowStats')
+    expect(overview.name).toBe('conversation.view')
+    expect(overview.order).toBe(20)
+    const analytics = optionsOf(state, 'sessionAnalytics')
+    expect(analytics.name).toBe('conversation.view')
+    expect(analytics.order).toBe(21)
   })
 
   it('inject face opens the session', () => {
     const { ctx, state } = makeFake()
     apply(ctx as never)
-    const options = state.registerArgs[0] as { inject: () => { open: (id: string) => void } }
-    const injected = options.inject()
+    const overview = optionsOf(state, 'windowStats')
+    const injected = overview.inject!()
     injected.open('session-9')
     expect(state.opened).toEqual(['session-9'])
   })

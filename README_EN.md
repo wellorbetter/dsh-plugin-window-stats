@@ -30,6 +30,7 @@
 
 - 🗂️ **All-windows overview**: one row per session — status (running / waiting for approval / waiting for your answer / plan review / completed / idle), title, turns/steps, input/output tokens, cache-hit ratio, context occupancy, duration, and last activity.
 - 📋 **Right detail panel**: select any session to expand a multi-dimensional breakdown — token buckets (uncached input / cache read / cache write / output, with proportional bars), context composition (system / tools / messages) plus an occupancy bar, timing (LLM / tool / avg TTFT / decode throughput), and background-job & subagent counts.
+- 📈 **Session Analysis tab**: analyze the current session over a time range (10m / 1h / 1d / all) — tool-type duration distribution (web / bash / read / edit… by count and duration share), and per-turn task summaries (user input + tools used + duration).
 - 🧹 **Hides subagents**: shows only top-level sessions by default, hiding internal child-agent (subagent) sessions so the list isn't flooded by internal work.
 - 📊 **Aggregate header**: total sessions, running count, summed input/output tokens, and total duration at a glance.
 - 🖱️ **Click to jump**: the detail panel's "Open session" button jumps straight to that session.
