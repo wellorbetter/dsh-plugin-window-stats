@@ -18,6 +18,8 @@
 
 <p align="center"><img src="assets/window-stats.png" alt="窗口统计" width="100%"></p>
 
+<p align="center"><img src="assets/session-analytics.png" alt="会话分析" width="100%"></p>
+
 ## 这个插件提供什么
 
 安装此 bundle 后，目标 dsh profile 的每个会话都会多出一套跨会话观测界面。它读取官方 `tokenUsage` / `sessionStats` / `contextPressure` / `contextBreakdown` 投影（外加它自己注册的 `tokenHistory` 投影），因此除了那一个投影单元外，无需 host 服务或新增 RPC。

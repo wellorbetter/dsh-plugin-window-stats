@@ -18,6 +18,8 @@
 
 <p align="center"><img src="assets/window-stats.png" alt="Window Stats" width="100%"></p>
 
+<p align="center"><img src="assets/session-analytics.png" alt="Session Analysis" width="100%"></p>
+
 ## What this plugin provides
 
 Installing this bundle adds a cross-session observability surface to every session of the target dsh profile. It reads the official `tokenUsage` / `sessionStats` / `contextPressure` / `contextBreakdown` projections (plus a `tokenHistory` projection it registers itself), so no host service or new RPC is required beyond that one projection unit.
