@@ -28,7 +28,8 @@
 
 ## ✨ Features
 
-- 🗂️ **All-windows overview**: one row per session — status (running / waiting for approval / waiting for your answer / plan review / completed / idle), title, turns/steps, input/output tokens, cache-hit ratio, context occupancy, duration, and last activity.
+- 🗂️ **All-windows overview**: one row per session — status (running / waiting for approval / waiting for your answer / plan review / completed / idle), title, turns/steps, input/output tokens, cache-hit ratio, context occupancy, duration, cost, and last activity.
+- 🖥️ **Always-visible overview**: a compact "running · tokens" summary in the sidebar footer (left), and a collapsible "Overview" panel docked to the right (running sessions + top token consumers, click-to-open).
 - 📋 **Right detail panel**: select any session to expand a multi-dimensional breakdown — token buckets (uncached input / cache read / cache write / output, with proportional bars), context composition (system / tools / messages) plus an occupancy bar, timing (LLM / tool / avg TTFT / decode throughput), and background-job & subagent counts.
 - 📈 **Session Analysis tab**: analyze the current session over a time range (10m / 1h / 1d / all / **custom N min·h·d**) — a token trend chart (input/output), tool-type duration distribution (donut + bars), and per-turn task summaries (user input + tools used + duration).
 - 💰 **Cost estimation**: estimate per-session USD cost from DeepSeek's official pricing (V4-Flash / V4-Pro switchable; cache-hit / cache-miss / output priced separately), with **USD / CNY / EUR / GBP / JPY** currency switching.

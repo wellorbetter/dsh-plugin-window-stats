@@ -9,10 +9,10 @@ import type { Context } from '@deepseek-ai/cordis';
 /** Required services: slot registry, locale, and the session list. */
 export declare const inject: string[];
 /**
- * Client plugin body: register the locale dictionaries and the two view tabs
- * (Window Stats overview + Session Analysis). Each slot registration waits on
- * the `conversation.view` declaration via `ctx.slots.inject` and is removed
- * when the plugin unloads.
+ * Client plugin body: register the locale dictionaries, the two view tabs
+ * (Window Stats overview + Session Analysis), the sidebar summary, and the
+ * right-docked overview panel. Each registration waits on its slot's
+ * declaration via `ctx.slots.inject` and is removed when the plugin unloads.
  * @param ctx - client cordis context.
  */
 export declare function apply(ctx: Context): void;

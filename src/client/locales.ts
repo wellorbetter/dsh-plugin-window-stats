@@ -101,6 +101,10 @@ export type WindowStatsKey =
   | 'chart.toolShare'
   | 'chart.input'
   | 'chart.output'
+  | 'overview.title'
+  | 'overview.running'
+  | 'overview.topTokens'
+  | 'overview.collapse'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -203,6 +207,10 @@ export const zh: Record<WindowStatsKey, string> = {
   'chart.toolShare': '工具占比',
   'chart.input': '输入',
   'chart.output': '输出',
+  'overview.title': '全局总览',
+  'overview.running': '运行中',
+  'overview.topTokens': 'Token 消耗 Top',
+  'overview.collapse': '收起',
 }
 
 /** English dictionary. */
@@ -299,4 +307,8 @@ export const en: Record<WindowStatsKey, string> = {
   'chart.toolShare': 'Tool share',
   'chart.input': 'Input',
   'chart.output': 'Output',
+  'overview.title': 'Overview',
+  'overview.running': 'Running',
+  'overview.topTokens': 'Top token usage',
+  'overview.collapse': 'Collapse',
 }

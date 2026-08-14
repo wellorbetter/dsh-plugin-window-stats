@@ -68,18 +68,18 @@ const optionsOf = (state: FakeState, id: string): RegistrationOptions =>
   state.registrations.map(args => args[0] as RegistrationOptions).find(o => o.id === id) as RegistrationOptions
 
 describe('client apply', () => {
-  it('registers the locale and both conversation.view tabs', () => {
+  it('registers the locale, both tabs, the sidebar summary, and the overview panel', () => {
     const { ctx, state } = makeFake()
     apply(ctx as never)
     expect(state.localeRegisterCalls.length).toBe(1)
     expect(state.localeRegisterCalls[0]?.[0]).toBe('windowStats')
-    expect(state.slotsInjectKeys).toEqual(['conversation.view', 'conversation.view'])
-    const overview = optionsOf(state, 'windowStats')
-    expect(overview.name).toBe('conversation.view')
-    expect(overview.order).toBe(20)
-    const analytics = optionsOf(state, 'sessionAnalytics')
-    expect(analytics.name).toBe('conversation.view')
-    expect(analytics.order).toBe(21)
+    expect(state.slotsInjectKeys).toEqual(['conversation.view', 'conversation.view', 'sidebar.footer.action', 'shell.overlay'])
+    expect(optionsOf(state, 'windowStats').name).toBe('conversation.view')
+    expect(optionsOf(state, 'windowStats').order).toBe(20)
+    expect(optionsOf(state, 'sessionAnalytics').name).toBe('conversation.view')
+    expect(optionsOf(state, 'sessionAnalytics').order).toBe(21)
+    expect(optionsOf(state, 'windowStatsSummary').name).toBe('sidebar.footer.action')
+    expect(optionsOf(state, 'windowStatsOverview').name).toBe('shell.overlay')
   })
 
   it('inject face opens the session', () => {
