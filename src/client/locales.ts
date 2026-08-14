@@ -101,6 +101,7 @@ export type WindowStatsKey =
   | 'chart.toolShare'
   | 'chart.input'
   | 'chart.output'
+  | 'chart.total'
   | 'overview.title'
   | 'overview.running'
   | 'overview.topTokens'
@@ -208,6 +209,7 @@ export const zh: Record<WindowStatsKey, string> = {
   'chart.toolShare': '工具占比',
   'chart.input': '输入',
   'chart.output': '输出',
+  'chart.total': '总量',
   'overview.title': '全局总览',
   'overview.running': '运行中',
   'overview.topTokens': 'Token 消耗 Top',
@@ -309,6 +311,7 @@ export const en: Record<WindowStatsKey, string> = {
   'chart.toolShare': 'Tool share',
   'chart.input': 'Input',
   'chart.output': 'Output',
+  'chart.total': 'Total',
   'overview.title': 'Overview',
   'overview.running': 'Running',
   'overview.topTokens': 'Top token usage',

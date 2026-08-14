@@ -156,49 +156,74 @@ function TokenTrendChart({ history, now, rangeMs, t }: { history: TokenHistoryPr
     .sort()
   if (days.length === 0) return <div className={css.chartEmpty}>–</div>
 
-  const series = days.map(key => ({ key, ...history[key]! }))
+  // Per-day total = input + output. Bars are stacked (input light, output solid);
+  // the line traces the top of each stack (the daily total), matching the
+  // DeepSeek usage-page "column + total trend line" style.
+  const series = days.map(key => {
+    const d = history[key]!
+    return { key, input: d.input, output: d.output, total: d.input + d.output }
+  })
   let max = 0
-  for (const s of series) max = Math.max(max, s.input, s.output)
+  for (const s of series) max = Math.max(max, s.total)
   const scaleMax = max > 0 ? max : 1
 
-  // Fixed, non-stretched canvas (aspect preserved; width is capped in CSS).
   const W = 520
-  const H = 190
-  const PAD = { top: 14, right: 14, bottom: 26, left: 48 }
+  const H = 200
+  const PAD = { top: 16, right: 14, bottom: 26, left: 48 }
   const plotW = W - PAD.left - PAD.right
   const plotH = H - PAD.top - PAD.bottom
+  const baseline = PAD.top + plotH
   const xOf = (i: number): number => PAD.left + (plotW * (i + 0.5)) / series.length
   const yOf = (v: number): number => PAD.top + plotH - (v / scaleMax) * plotH
   const barW = series.length === 1 ? 40 : Math.min(40, (plotW / series.length) * 0.5)
 
-  // Input tokens = bars (light), output tokens = line + dots (solid).
   const ticks = [0, 0.5, 1].map(f => ({ f, v: scaleMax * f, y: yOf(scaleMax * f) }))
-  const linePath = series.map((s, i) => `${i === 0 ? 'M' : 'L'}${xOf(i).toFixed(1)},${yOf(s.output).toFixed(1)}`).join(' ')
+  const topPath = series.map((s, i) => `${i === 0 ? 'M' : 'L'}${xOf(i).toFixed(1)},${yOf(s.total).toFixed(1)}`).join(' ')
+  // Soft area fill under the total line (down to the baseline), DeepSeek-style.
+  const areaPath = series.length === 1
+    ? ''
+    : `${topPath} L${xOf(series.length - 1).toFixed(1)},${baseline} L${xOf(0).toFixed(1)},${baseline} Z`
   const dayLabel = (key: string): string => key.slice(5) // "YYYY-MM-DD" → "MM-DD"
 
   return (
     <div className={css.chartBox}>
       <svg className={css.chart} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={t('chart.tokens')}>
+        <defs>
+          <linearGradient id="wsTrendFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" className={css.chartAreaTop} />
+            <stop offset="100%" className={css.chartAreaBottom} />
+          </linearGradient>
+        </defs>
         {ticks.map(tk => (
           <g key={tk.f}>
             <line className={css.chartGrid} x1={PAD.left} x2={W - PAD.right} y1={tk.y} y2={tk.y} />
             <text className={css.chartAxis} x={PAD.left - 6} y={tk.y + 3} textAnchor="end">{formatTokens(tk.v)}</text>
           </g>
         ))}
-        {series.map((s, i) => (
-          <rect key={s.key} className={css.chartBar} x={xOf(i) - barW / 2} y={yOf(s.input)} width={barW} height={Math.max(1, PAD.top + plotH - yOf(s.input))} rx={3} />
-        ))}
-        <path className={css.chartLine} d={linePath} />
+        {series.map((s, i) => {
+          const cx = xOf(i)
+          const outTop = yOf(s.total)
+          const inTop = yOf(s.input)
+          return (
+            <g key={s.key}>
+              <rect className={css.chartBarIn} x={cx - barW / 2} y={inTop} width={barW} height={Math.max(1, baseline - inTop)} rx={2} />
+              <rect className={css.chartBarOut} x={cx - barW / 2} y={outTop} width={barW} height={Math.max(1, inTop - outTop)} rx={2} />
+            </g>
+          )
+        })}
+        {areaPath !== '' && <path className={css.chartArea} d={areaPath} />}
+        <path className={css.chartLine} d={topPath} />
         {series.map((s, i) => (
           <g key={s.key}>
-            <circle className={css.chartDot} cx={xOf(i)} cy={yOf(s.output)} r={3} />
+            <circle className={css.chartDot} cx={xOf(i)} cy={yOf(s.total)} r={3.5} />
             <text className={css.chartAxis} x={xOf(i)} y={H - 8} textAnchor="middle">{dayLabel(s.key)}</text>
           </g>
         ))}
       </svg>
       <div className={css.chartLegend}>
-        <span className={css.legendItem}><span className={css.legendBar} />{t('chart.input')}</span>
-        <span className={css.legendItem}><span className={css.legendLine} />{t('chart.output')}</span>
+        <span className={css.legendItem}><span className={css.legendBarIn} />{t('chart.input')}</span>
+        <span className={css.legendItem}><span className={css.legendBarOut} />{t('chart.output')}</span>
+        <span className={css.legendItem}><span className={css.legendLine} />{t('chart.total')}</span>
       </div>
     </div>
   )

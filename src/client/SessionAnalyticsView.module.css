@@ -227,9 +227,9 @@
   font-family: var(--ds-font-family-code, monospace);
 }
 
-/* Token trend chart (line + bar combo, capped width — not stretched full-width) */
+/* Token trend chart (stacked bars + total trend line, capped width) */
 .chartBox {
-  max-width: 440px;
+  max-width: 460px;
 }
 
 .chart {
@@ -248,9 +248,28 @@
   font-size: 10px;
 }
 
-.chartBar {
+.chartBarIn {
   fill: var(--dsw-alias-state-business-primary);
-  opacity: 0.35;
+  opacity: 0.28;
+}
+
+.chartBarOut {
+  fill: var(--dsw-alias-state-business-primary);
+  opacity: 0.75;
+}
+
+.chartArea {
+  fill: url(#wsTrendFill);
+}
+
+.chartAreaTop {
+  stop-color: var(--dsw-alias-state-business-primary);
+  stop-opacity: 0.16;
+}
+
+.chartAreaBottom {
+  stop-color: var(--dsw-alias-state-business-primary);
+  stop-opacity: 0;
 }
 
 .chartLine {
@@ -262,7 +281,9 @@
 }
 
 .chartDot {
-  fill: var(--dsw-alias-state-business-primary);
+  fill: var(--dsw-alias-bg-layer-1);
+  stroke: var(--dsw-alias-state-business-primary);
+  stroke-width: 2;
 }
 
 .chartEmpty {
@@ -284,12 +305,20 @@
   color: var(--dsw-alias-label-secondary);
 }
 
-.legendBar {
+.legendBarIn {
   width: 9px;
   height: 9px;
   border-radius: 2px;
   background: var(--dsw-alias-state-business-primary);
-  opacity: 0.35;
+  opacity: 0.28;
+}
+
+.legendBarOut {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: var(--dsw-alias-state-business-primary);
+  opacity: 0.75;
 }
 
 .legendLine {

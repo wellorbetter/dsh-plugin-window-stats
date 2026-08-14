@@ -16,7 +16,9 @@
     "lib/client.js.map",
     "lib/types/**/*.d.ts",
     "cordis.patch.yml",
-    "README.md"
+    "README.md",
+    "README.zh.md",
+    "assets/*.png"
   ],
   "exports": {
     ".": {
