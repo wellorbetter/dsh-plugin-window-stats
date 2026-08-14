@@ -105,6 +105,7 @@ export type WindowStatsKey =
   | 'overview.running'
   | 'overview.topTokens'
   | 'overview.collapse'
+  | 'overview.recent'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -211,6 +212,7 @@ export const zh: Record<WindowStatsKey, string> = {
   'overview.running': '运行中',
   'overview.topTokens': 'Token 消耗 Top',
   'overview.collapse': '收起',
+  'overview.recent': '最近活动',
 }
 
 /** English dictionary. */
@@ -311,4 +313,5 @@ export const en: Record<WindowStatsKey, string> = {
   'overview.running': 'Running',
   'overview.topTokens': 'Top token usage',
   'overview.collapse': 'Collapse',
+  'overview.recent': 'Recent activity',
 }

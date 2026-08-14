@@ -20,6 +20,7 @@ import {
   formatCost,
   formatDuration,
   formatTokens,
+  relativeTime,
 } from './stats.ts'
 import css from './Overview.module.css'
 
@@ -58,6 +59,7 @@ export function SidebarSummary({ wide, useSessions, t }: SidebarProps) {
  */
 export function GlobalOverviewPanel({ useSessions, open, t }: PanelProps) {
   const state = useSessions(s => s)
+  const now = useMemo(() => Date.now(), [state])
   const rows = useMemo(() => deriveWindowRows(state, { includeBlank: false }), [state])
   const totals = useMemo(() => aggregate(rows), [rows])
   const [collapsed, setCollapsed] = useState(false)
@@ -66,6 +68,7 @@ export function GlobalOverviewPanel({ useSessions, open, t }: PanelProps) {
     () => [...rows].sort((a, b) => (b.inputTokens ?? -1) - (a.inputTokens ?? -1)).slice(0, 6),
     [rows],
   )
+  const recent = useMemo(() => rows.slice(0, 8), [rows])
   const cost = useMemo(
     () => rows.reduce((sum, r) => sum + (costUsd(r, DEFAULT_PRICING['deepseek-v4-pro']!) ?? 0), 0),
     [rows],
@@ -114,6 +117,23 @@ export function GlobalOverviewPanel({ useSessions, open, t }: PanelProps) {
           </button>
         ))}
       </div>
+
+      <div className={css.panelSection}>
+        <div className={css.panelSectionTitle}>{t('overview.recent')}</div>
+        {recent.map(r => (
+          <button key={r.id} type="button" className={css.panelItem} onClick={() => { open(r.id) }} title={r.title}>
+            <span className={css.panelItemTitle}>{r.title}</span>
+            <span className={css.panelItemValue}>{whenLabel(r.updatedAt, now, t)}</span>
+          </button>
+        ))}
+      </div>
     </div>
   )
+}
+
+function whenLabel(ts: number, now: number, t: PanelProps['t']): string {
+  const time = relativeTime(ts, now)
+  if (time.unit === 'now') return t('time.now')
+  const keys = { min: 'time.min', hour: 'time.hour', day: 'time.day', week: 'time.week', month: 'time.month', year: 'time.year' } as const
+  return t(keys[time.unit], { n: time.n })
 }
