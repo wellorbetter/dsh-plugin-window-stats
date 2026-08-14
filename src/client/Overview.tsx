@@ -103,19 +103,24 @@ export function GlobalOverviewPanel({ useSessions, open, t }: PanelProps) {
         <div className={css.panelStat}><span className={css.panelStatLabel}>{t('header.cost')}</span><span className={css.panelStatValue}>{formatCost(cost)}</span></div>
       </div>
 
-      <div className={css.panelSection}>
-        <div className={css.panelSectionTitle}>{t('overview.running')}</div>
+      <div className={css.panelSection} data-accent="running">
+        <div className={css.panelSectionTitle}>
+          <span className={css.accentDot} />
+          {t('overview.running')}
+          {running.length > 0 && <span className={css.sectionCount}>{running.length}</span>}
+        </div>
         {running.length === 0
           ? <div className={css.panelEmpty}>–</div>
           : running.map(r => (
             <button key={r.id} type="button" className={css.panelItem} onClick={() => { open(r.id) }} title={r.title}>
+              <span className={css.pulseDot} />
               <span className={css.panelItemTitle}>{r.title}</span>
             </button>
           ))}
       </div>
 
-      <div className={css.panelSection}>
-        <div className={css.panelSectionTitle}>{t('overview.topTokens')}</div>
+      <div className={css.panelSection} data-accent="top">
+        <div className={css.panelSectionTitle}><span className={css.accentDot} />{t('overview.topTokens')}</div>
         {top.map(r => (
           <button key={r.id} type="button" className={css.panelItem} onClick={() => { open(r.id) }} title={r.title}>
             <span className={css.panelItemTitle}>{r.title}</span>
@@ -124,8 +129,8 @@ export function GlobalOverviewPanel({ useSessions, open, t }: PanelProps) {
         ))}
       </div>
 
-      <div className={css.panelSection}>
-        <div className={css.panelSectionTitle}>{t('overview.recent')}</div>
+      <div className={css.panelSection} data-accent="recent">
+        <div className={css.panelSectionTitle}><span className={css.accentDot} />{t('overview.recent')}</div>
         {recent.map(r => (
           <button key={r.id} type="button" className={css.panelItem} onClick={() => { open(r.id) }} title={r.title}>
             <span className={css.panelItemTitle}>{r.title}</span>

@@ -116,13 +116,67 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 10px;
+  background: var(--dsw-alias-bg-layer-1);
+  box-shadow: var(--dsw-shadow-lv1);
 }
 
 .panelSectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   color: var(--dsw-alias-label-secondary);
   font-size: 12px;
   font-weight: 600;
-  padding-top: 4px;
+}
+
+.accentDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dsw-alias-label-tertiary);
+  flex: 0 0 auto;
+}
+
+.panelSection[data-accent='running'] .accentDot { background: var(--dsw-alias-state-success-primary); }
+.panelSection[data-accent='top'] .accentDot { background: var(--dsw-alias-state-business-primary); }
+.panelSection[data-accent='recent'] .accentDot { background: var(--dsw-alias-label-tertiary); }
+
+.sectionCount {
+  margin-left: auto;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--dsw-alias-state-success-tertiary);
+  color: var(--dsw-alias-state-success-primary);
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Pulsing "alive" dot for running sessions (pure CSS, no Lottie dependency). */
+.pulseDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dsw-alias-state-success-primary);
+  flex: 0 0 auto;
+  animation: overviewPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes overviewPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.6); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulseDot { animation: none; }
 }
 
 .panelEmpty {
