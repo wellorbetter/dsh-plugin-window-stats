@@ -82,6 +82,17 @@ export type WindowStatsKey =
   | 'an.turns.title'
   | 'an.turns.empty'
   | 'an.noPrompt'
+  | 'col.cost'
+  | 'header.cost'
+  | 'sort.activity'
+  | 'sort.inputTokens'
+  | 'sort.duration'
+  | 'filter.all'
+  | 'filter.running'
+  | 'filter.waiting'
+  | 'filter.idle'
+  | 'group.byWorkspace'
+  | 'detail.heatmap'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -165,6 +176,17 @@ export const zh: Record<WindowStatsKey, string> = {
   'an.turns.title': '任务摘要',
   'an.turns.empty': '该时间范围内暂无活动',
   'an.noPrompt': '（无用户输入）',
+  'col.cost': '成本',
+  'header.cost': '成本',
+  'sort.activity': '按活动',
+  'sort.inputTokens': '按输入',
+  'sort.duration': '按耗时',
+  'filter.all': '全部',
+  'filter.running': '运行中',
+  'filter.waiting': '等待中',
+  'filter.idle': '空闲',
+  'group.byWorkspace': '按工作区',
+  'detail.heatmap': 'Token 热力图',
 }
 
 /** English dictionary. */
@@ -242,4 +264,15 @@ export const en: Record<WindowStatsKey, string> = {
   'an.turns.title': 'Task summary',
   'an.turns.empty': 'No activity in this range',
   'an.noPrompt': '(no user input)',
+  'col.cost': 'Cost',
+  'header.cost': 'Cost',
+  'sort.activity': 'Activity',
+  'sort.inputTokens': 'Input',
+  'sort.duration': 'Duration',
+  'filter.all': 'All',
+  'filter.running': 'Running',
+  'filter.waiting': 'Waiting',
+  'filter.idle': 'Idle',
+  'group.byWorkspace': 'By workspace',
+  'detail.heatmap': 'Token heatmap',
 }

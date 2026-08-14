@@ -44,6 +44,40 @@
   padding: 0 2px;
 }
 
+/* Toolbar */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+
+.toolGroup {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  padding: 3px 10px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 999px;
+  background: var(--dsw-alias-button-elevated-fill);
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.chipActive {
+  color: var(--dsw-alias-label-primary);
+  border-color: var(--dsw-alias-state-business-primary);
+  background: var(--dsw-alias-interactive-bg-hover);
+  font-weight: 600;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -333,4 +367,43 @@
   height: 100%;
   background: var(--dsw-alias-state-business-primary);
   border-radius: 4px;
+}
+
+/* Workspace group rows */
+.groupRow td {
+  padding: 10px 8px 4px;
+  border-bottom: none;
+}
+
+.groupTitle {
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: none;
+}
+
+/* Token heatmap */
+.heatmap {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  padding: 2px 0;
+}
+
+.heatmapWeek {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.heatmapCell {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  background: var(--dsw-alias-state-business-primary);
+}
+
+.heatmapEmpty {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
 }

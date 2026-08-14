@@ -4,13 +4,19 @@ import type { SessionId, SessionListState, SessionSummary } from '@deepseek-ai/d
 import {
   aggregate,
   cacheHitRatio,
+  costUsd,
   decodeThroughput,
   deriveRow,
   deriveWindowRows,
+  filterRows,
+  formatCost,
   formatDuration,
   formatTokens,
+  groupByWorkspace,
   hiddenSubagentCount,
+  peakDailyTokens,
   relativeTime,
+  sortRows,
   ttftAverageMs,
 } from '../src/client/stats.ts'
 
@@ -214,5 +220,60 @@ describe('decodeThroughput / ttftAverageMs', () => {
     const bare = deriveRow(summary({ id: id(2) }))
     expect(decodeThroughput(bare)).toBeNull()
     expect(ttftAverageMs(bare)).toBeNull()
+  })
+})
+
+describe('costUsd / formatCost', () => {
+  const pricing = { inputHit: 0.003625, inputMiss: 0.435, output: 0.87 }
+
+  it('estimates cost from disjoint buckets and returns null without usage', () => {
+    const row = deriveRow(summary({ id: id(1), projectionValues: usage(1000, 100, 500, 200) }))
+    // miss = uncached(1000) + cacheWrite(200) = 1200 ; hit = 500 ; output = 100
+    const expected = (1200 * 0.435 + 500 * 0.003625 + 100 * 0.87) / 1_000_000
+    expect(costUsd(row, pricing)).toBeCloseTo(expected, 12)
+    const bare = deriveRow(summary({ id: id(2) }))
+    expect(costUsd(bare, pricing)).toBeNull()
+  })
+
+  it('formats USD compactly', () => {
+    expect(formatCost(12.3)).toBe('$12.30')
+    expect(formatCost(0.45)).toBe('$0.450')
+    expect(formatCost(0.0234)).toBe('$0.023')
+  })
+})
+
+describe('filterRows / sortRows / groupByWorkspace', () => {
+  const rows = [
+    deriveRow(summary({ id: id(1), displayTitle: 'a', running: true, updatedAt: 300, cwd: 'C:\\x\\alpha', projectionValues: usage(10, 0, 0, 0) })),
+    deriveRow(summary({ id: id(2), displayTitle: 'b', pendingInteraction: 'question', updatedAt: 200, cwd: 'C:\\x\\alpha', projectionValues: usage(100, 0, 0, 0) })),
+    deriveRow(summary({ id: id(3), displayTitle: 'c', updatedAt: 100, cwd: 'C:\\x\\beta', projectionValues: usage(50, 0, 0, 0) })),
+  ]
+
+  it('filters by status', () => {
+    expect(filterRows(rows, 'running').map(r => r.id)).toEqual([id(1)])
+    expect(filterRows(rows, 'waiting').map(r => r.id)).toEqual([id(2)])
+    expect(filterRows(rows, 'idle').map(r => r.id)).toEqual([id(3)])
+    expect(filterRows(rows, 'all').length).toBe(3)
+  })
+
+  it('sorts by input tokens and duration', () => {
+    const byInput = sortRows(rows, 'inputTokens')
+    expect(byInput[0]?.id).toBe(id(2))
+    const byActivity = sortRows(rows, 'activity')
+    expect(byActivity[0]?.id).toBe(id(1))
+  })
+
+  it('groups by workspace basename', () => {
+    const groups = groupByWorkspace(rows)
+    expect(groups.map(g => g.title)).toEqual(['alpha', 'beta'])
+    expect(groups[0]?.rows.length).toBe(2)
+    expect(groups[1]?.rows.length).toBe(1)
+  })
+})
+
+describe('peakDailyTokens', () => {
+  it('returns the max single-day total', () => {
+    expect(peakDailyTokens({ '2026-08-01': { input: 10, output: 5 }, '2026-08-02': { input: 1, output: 1 } })).toBe(15)
+    expect(peakDailyTokens({})).toBe(0)
   })
 })

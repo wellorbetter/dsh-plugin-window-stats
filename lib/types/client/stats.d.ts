@@ -78,6 +78,8 @@ export interface WindowRow {
     /** Background jobs / child subagents mirrored from the session list. */
     jobsCount: number;
     subagentCount: number;
+    /** Per-day token history (heatmap), when the host unit is mounted. */
+    tokenHistory?: TokenHistoryProjection;
 }
 /** Aggregate figures across the derived rows. */
 export interface WindowAggregate {
@@ -178,3 +180,73 @@ export declare function relativeTime(ts: number, now: number): {
     unit: RelativeTimeUnit;
     n: number;
 };
+/** Model pricing in USD per 1M tokens. */
+export interface ModelPricing {
+    inputHit: number;
+    inputMiss: number;
+    output: number;
+}
+/**
+ * DeepSeek official pricing (snapshot 2026-08-14 from
+ * https://api-docs.deepseek.com/quick_start/pricing/). Update here when the
+ * upstream page changes.
+ */
+export declare const DEFAULT_PRICING: Readonly<Record<string, ModelPricing>>;
+/**
+ * Estimate the USD cost of one session's recorded usage.
+ * Cache reads are billed at the hit price; uncached input and cache writes at
+ * the miss price; output at the output price.
+ * @param row - the dashboard row.
+ * @param pricing - the model pricing to apply.
+ * @returns cost in USD, or null when the row has no usage.
+ */
+export declare function costUsd(row: WindowRow, pricing: ModelPricing): number | null;
+/** Format a USD cost compactly: $12.30, $0.45, $0.0234. */
+export declare function formatCost(usd: number): string;
+/** Sort keys for the overview table. */
+export type SortKey = 'activity' | 'inputTokens' | 'duration';
+/** Status filter buckets for the overview table. */
+export type StatusFilter = 'all' | 'running' | 'waiting' | 'idle';
+/**
+ * Filter rows by status bucket.
+ * @param rows - the derived rows.
+ * @param status - the bucket to keep.
+ * @returns the filtered rows.
+ */
+export declare function filterRows(rows: readonly WindowRow[], status: StatusFilter): WindowRow[];
+/**
+ * Sort rows by the given key (stable tie-break by activity).
+ * @param rows - the derived rows.
+ * @param key - the sort key.
+ * @returns a new sorted array.
+ */
+export declare function sortRows(rows: readonly WindowRow[], key: SortKey): WindowRow[];
+/** One workspace group (sessions sharing a cwd). */
+export interface WorkspaceGroup {
+    title: string;
+    rows: WindowRow[];
+}
+/**
+ * Group rows by workspace (cwd), preserving the input order inside each group.
+ * @param rows - the derived rows (already sorted).
+ * @returns groups ordered by their first row's position.
+ */
+export declare function groupByWorkspace(rows: readonly WindowRow[]): WorkspaceGroup[];
+/** One day of token history (input/output). */
+export interface TokenHistoryDay {
+    input: number;
+    output: number;
+}
+/** Per-day token history keyed by UTC day `YYYY-MM-DD`. */
+export type TokenHistoryProjection = Record<string, TokenHistoryDay>;
+declare module '@deepseek-ai/dsh-session-projection/types' {
+    interface SessionProjectionMap {
+        tokenHistory: TokenHistoryProjection;
+    }
+}
+/**
+ * Peak daily token total (input + output) across the history.
+ * @param history - the per-day token history.
+ * @returns the maximum single-day total (0 when empty).
+ */
+export declare function peakDailyTokens(history: Readonly<TokenHistoryProjection>): number;

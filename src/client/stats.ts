@@ -92,6 +92,8 @@ export interface WindowRow {
   /** Background jobs / child subagents mirrored from the session list. */
   jobsCount: number
   subagentCount: number
+  /** Per-day token history (heatmap), when the host unit is mounted. */
+  tokenHistory?: TokenHistoryProjection
 }
 
 /** Aggregate figures across the derived rows. */
@@ -182,6 +184,9 @@ export function deriveRow(summary: SessionSummary): WindowRow {
         toolsTokens: breakdown.toolsTokens,
         messageTokens: breakdown.messageTokens,
       }
+      : {}),
+    ...(summary.projectionValues?.tokenHistory !== undefined
+      ? { tokenHistory: summary.projectionValues.tokenHistory }
       : {}),
   }
 }
@@ -351,4 +356,164 @@ export function relativeTime(ts: number, now: number): { unit: RelativeTimeUnit;
   const months = Math.floor(days / 30)
   if (days < 365) return { unit: 'month', n: months }
   return { unit: 'year', n: Math.floor(days / 365) }
+}
+
+// ---------------------------------------------------------------------------
+// Cost estimation (USD, per 1M tokens) and per-day token history.
+// ---------------------------------------------------------------------------
+
+/** Model pricing in USD per 1M tokens. */
+export interface ModelPricing {
+  inputHit: number
+  inputMiss: number
+  output: number
+}
+
+/**
+ * DeepSeek official pricing (snapshot 2026-08-14 from
+ * https://api-docs.deepseek.com/quick_start/pricing/). Update here when the
+ * upstream page changes.
+ */
+export const DEFAULT_PRICING: Readonly<Record<string, ModelPricing>> = {
+  'deepseek-v4-flash': { inputHit: 0.0028, inputMiss: 0.14, output: 0.28 },
+  'deepseek-v4-pro': { inputHit: 0.003625, inputMiss: 0.435, output: 0.87 },
+}
+
+/**
+ * Estimate the USD cost of one session's recorded usage.
+ * Cache reads are billed at the hit price; uncached input and cache writes at
+ * the miss price; output at the output price.
+ * @param row - the dashboard row.
+ * @param pricing - the model pricing to apply.
+ * @returns cost in USD, or null when the row has no usage.
+ */
+export function costUsd(row: WindowRow, pricing: ModelPricing): number | null {
+  if (row.inputTokens === undefined) return null
+  const miss = (row.uncachedInputTokens ?? 0) + (row.cacheWriteTokens ?? 0)
+  const hit = row.cacheReadTokens ?? 0
+  const output = row.outputTokens ?? 0
+  return (miss * pricing.inputMiss + hit * pricing.inputHit + output * pricing.output) / 1_000_000
+}
+
+/** Format a USD cost compactly: $12.30, $0.45, $0.0234. */
+export function formatCost(usd: number): string {
+  if (!Number.isFinite(usd) || usd < 0) return '–'
+  if (usd >= 100) return `$${usd.toFixed(0)}`
+  if (usd >= 1) return `$${usd.toFixed(2)}`
+  if (usd >= 0.01) return `$${usd.toFixed(3)}`
+  return `$${usd.toFixed(4)}`
+}
+
+/** Sort keys for the overview table. */
+export type SortKey = 'activity' | 'inputTokens' | 'duration'
+
+/** Status filter buckets for the overview table. */
+export type StatusFilter = 'all' | 'running' | 'waiting' | 'idle'
+
+/** Whether a row is in a waiting state (pending interaction). */
+function isWaiting(row: WindowRow): boolean {
+  return row.pendingInteraction !== undefined
+}
+
+/**
+ * Filter rows by status bucket.
+ * @param rows - the derived rows.
+ * @param status - the bucket to keep.
+ * @returns the filtered rows.
+ */
+export function filterRows(rows: readonly WindowRow[], status: StatusFilter): WindowRow[] {
+  switch (status) {
+    case 'running': return rows.filter(r => r.running)
+    case 'waiting': return rows.filter(isWaiting)
+    case 'idle': return rows.filter(r => !r.running && !isWaiting(r))
+    case 'all': return [...rows]
+  }
+}
+
+/**
+ * Sort rows by the given key (stable tie-break by activity).
+ * @param rows - the derived rows.
+ * @param key - the sort key.
+ * @returns a new sorted array.
+ */
+export function sortRows(rows: readonly WindowRow[], key: SortKey): WindowRow[] {
+  const copy = [...rows]
+  switch (key) {
+    case 'inputTokens':
+      copy.sort((a, b) => (b.inputTokens ?? -1) - (a.inputTokens ?? -1))
+      return copy
+    case 'duration': {
+      const dur = (r: WindowRow): number => (r.llmMs ?? 0) + (r.toolMs ?? 0)
+      copy.sort((a, b) => dur(b) - dur(a))
+      return copy
+    }
+    case 'activity':
+      copy.sort((a, b) => b.updatedAt - a.updatedAt)
+      return copy
+  }
+}
+
+/** One workspace group (sessions sharing a cwd). */
+export interface WorkspaceGroup {
+  title: string
+  rows: WindowRow[]
+}
+
+/** Basename of a path (workspace title fallback). */
+function basename(path: string): string {
+  const norm = path.replace(/[\\/]+$/, '')
+  const idx = Math.max(norm.lastIndexOf('\\'), norm.lastIndexOf('/'))
+  return idx >= 0 ? norm.slice(idx + 1) : norm
+}
+
+/**
+ * Group rows by workspace (cwd), preserving the input order inside each group.
+ * @param rows - the derived rows (already sorted).
+ * @returns groups ordered by their first row's position.
+ */
+export function groupByWorkspace(rows: readonly WindowRow[]): WorkspaceGroup[] {
+  const groups: WorkspaceGroup[] = []
+  const index = new Map<string, WorkspaceGroup>()
+  for (const row of rows) {
+    const title = row.cwd !== undefined && row.cwd.length > 0 ? basename(row.cwd) : 'ungrouped'
+    let group = index.get(title)
+    if (group === undefined) {
+      group = { title, rows: [] }
+      index.set(title, group)
+      groups.push(group)
+    }
+    group.rows.push(row)
+  }
+  return groups
+}
+
+/** One day of token history (input/output). */
+export interface TokenHistoryDay {
+  input: number
+  output: number
+}
+
+/** Per-day token history keyed by UTC day `YYYY-MM-DD`. */
+export type TokenHistoryProjection = Record<string, TokenHistoryDay>
+
+declare module '@deepseek-ai/dsh-session-projection/types' {
+  interface SessionProjectionMap {
+    tokenHistory: TokenHistoryProjection
+  }
+}
+
+/**
+ * Peak daily token total (input + output) across the history.
+ * @param history - the per-day token history.
+ * @returns the maximum single-day total (0 when empty).
+ */
+export function peakDailyTokens(history: Readonly<TokenHistoryProjection>): number {
+  let peak = 0
+  for (const key of Object.keys(history)) {
+    const day = history[key]
+    if (day === undefined) continue
+    const total = day.input + day.output
+    if (total > peak) peak = total
+  }
+  return peak
 }
