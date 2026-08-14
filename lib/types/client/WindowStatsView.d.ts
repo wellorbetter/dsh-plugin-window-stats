@@ -12,7 +12,6 @@ type WindowStatsProps = ConvViewProps & InjectFace<WindowStatsInjected> & PropsL
 /**
  * Render the Window Stats dashboard.
  * @param props - the composed slot props.
- * @returns the table, header, and empty state.
  */
 export declare function WindowStatsView({ useSessions, open, t }: WindowStatsProps): import("react").JSX.Element;
 export {};

@@ -1,12 +1,12 @@
 /**
- * 「窗口统计」 view tab: a read-only table of every non-blank session with its
- * progress (turns/steps) and token consumption (input/output/cache/context),
- * plus an aggregate header. Pure presentational — all data arrives through the
- * framework standard kit (`useSessions`) and the inject face (`open`).
+ * 「窗口统计」 view tab: a split dashboard — the left pane is a per-session
+ * table (overview), the right pane is a rich per-session detail breakdown.
+ * Pure presentational: data arrives through the framework standard kit
+ * (`useSessions`) and the inject face (`open`).
  *
  * @module @wellorbetter/dsh-plugin-window-stats/client/WindowStatsView
  */
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client'
 import type { ConvViewProps } from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
@@ -15,10 +15,14 @@ import { NS } from './locales.ts'
 import {
   aggregate,
   cacheHitRatio,
+  decodeThroughput,
   deriveWindowRows,
+  formatDuration,
+  formatOneDecimal,
   formatTokens,
   hiddenSubagentCount,
   relativeTime,
+  ttftAverageMs,
   type RelativeTimeUnit,
   type WindowRow,
 } from './stats.ts'
@@ -32,13 +36,6 @@ export interface WindowStatsInjected {
 
 /** Composed component props: the view slot shares plus the inject face and locale seat. */
 type WindowStatsProps = ConvViewProps & InjectFace<WindowStatsInjected> & PropsLocale<typeof NS>
-
-/** Map a row to its presentation state dot. */
-function stateOf(row: WindowRow): StateDotState {
-  if (row.running) return 'ongoing'
-  if (row.pendingInteraction !== undefined) return 'warning'
-  return 'done'
-}
 
 /** Localized status label key for a row. */
 type StatusKey =
@@ -60,30 +57,30 @@ function statusKeyOf(row: WindowRow): StatusKey {
   return row.completed ? 'status.completed' : 'status.idle'
 }
 
+function stateOf(row: WindowRow): StateDotState {
+  if (row.running) return 'ongoing'
+  if (row.pendingInteraction !== undefined) return 'warning'
+  return 'done'
+}
+
 /** Relative-time label key per bucket. */
 type TimeKey =
-  | 'time.now'
-  | 'time.min'
-  | 'time.hour'
-  | 'time.day'
-  | 'time.week'
-  | 'time.month'
-  | 'time.year'
+  | 'time.now' | 'time.min' | 'time.hour' | 'time.day' | 'time.week' | 'time.month' | 'time.year'
 
 const TIME_UNIT_KEYS: Record<RelativeTimeUnit, TimeKey> = {
-  now: 'time.now',
-  min: 'time.min',
-  hour: 'time.hour',
-  day: 'time.day',
-  week: 'time.week',
-  month: 'time.month',
-  year: 'time.year',
+  now: 'time.now', min: 'time.min', hour: 'time.hour', day: 'time.day',
+  week: 'time.week', month: 'time.month', year: 'time.year',
+}
+
+/** Total wall time (LLM + tool) for a row, or null when no timing recorded. */
+function rowDurationMs(row: WindowRow): number | null {
+  if (row.llmMs === undefined && row.toolMs === undefined) return null
+  return (row.llmMs ?? 0) + (row.toolMs ?? 0)
 }
 
 /**
  * Render the Window Stats dashboard.
  * @param props - the composed slot props.
- * @returns the table, header, and empty state.
  */
 export function WindowStatsView({ useSessions, open, t }: WindowStatsProps) {
   const state = useSessions(s => s)
@@ -91,6 +88,11 @@ export function WindowStatsView({ useSessions, open, t }: WindowStatsProps) {
   const rows = useMemo(() => deriveWindowRows(state, { includeBlank: false }), [state])
   const totals = useMemo(() => aggregate(rows), [rows])
   const hiddenSubagents = useMemo(() => hiddenSubagentCount(state), [state])
+  const [selectedId, setSelectedId] = useState<SessionId | null>(null)
+  const selected = useMemo(
+    () => (selectedId === null ? null : (rows.find(r => r.id === selectedId) ?? null)),
+    [rows, selectedId],
+  )
 
   if (rows.length === 0) {
     return (
@@ -120,27 +122,50 @@ export function WindowStatsView({ useSessions, open, t }: WindowStatsProps) {
           <span className={css.headerLabel}>{t('col.tokensOut')}</span>
           <span className={css.headerValue}>{formatTokens(totals.outputTokens)}</span>
         </span>
+        <span className={css.headerItem}>
+          <span className={css.headerLabel}>{t('header.duration')}</span>
+          <span className={css.headerValue}>{formatDuration(totals.llmMs + totals.toolMs)}</span>
+        </span>
       </div>
       {hiddenSubagents > 0 && (
         <div className={css.hint}>{t('hint.hiddenSubagents', { n: hiddenSubagents })}</div>
       )}
-      <table className={css.table}>
-        <thead>
-          <tr>
-            <th className={css.thStatus} scope="col">{t('col.status')}</th>
-            <th scope="col">{t('col.session')}</th>
-            <th scope="col">{t('col.progress')}</th>
-            <th scope="col" className={css.thNum}>{t('col.tokensIn')}</th>
-            <th scope="col" className={css.thNum}>{t('col.tokensOut')}</th>
-            <th scope="col" className={css.thNum}>{t('col.cache')}</th>
-            <th scope="col" className={css.thNum}>{t('col.context')}</th>
-            <th scope="col" className={css.thActivity}>{t('col.activity')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map(row => <WindowStatsRow key={row.id} row={row} now={now} t={t} onOpen={() => { open(row.id) }} />)}
-        </tbody>
-      </table>
+      <div className={css.split}>
+        <div className={css.listPane}>
+          <table className={css.table}>
+            <thead>
+              <tr>
+                <th className={css.thStatus} scope="col">{t('col.status')}</th>
+                <th scope="col">{t('col.session')}</th>
+                <th scope="col">{t('col.progress')}</th>
+                <th scope="col" className={css.thNum}>{t('col.tokensIn')}</th>
+                <th scope="col" className={css.thNum}>{t('col.tokensOut')}</th>
+                <th scope="col" className={css.thNum}>{t('col.cache')}</th>
+                <th scope="col" className={css.thNum}>{t('col.context')}</th>
+                <th scope="col" className={css.thNum}>{t('col.duration')}</th>
+                <th scope="col" className={css.thActivity}>{t('col.activity')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(row => (
+                <WindowStatsRow
+                  key={row.id}
+                  row={row}
+                  now={now}
+                  t={t}
+                  selected={row.id === selectedId}
+                  onSelect={() => { setSelectedId(row.id) }}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <aside className={css.detailPane}>
+          {selected === null
+            ? <div className={css.detailEmpty}>{t('detail.empty')}</div>
+            : <SessionDetail row={selected} t={t} onOpen={() => { open(selected.id) }} />}
+        </aside>
+      </div>
     </div>
   )
 }
@@ -149,10 +174,11 @@ interface RowProps {
   row: WindowRow
   now: number
   t: WindowStatsProps['t']
-  onOpen: () => void
+  selected: boolean
+  onSelect: () => void
 }
 
-function WindowStatsRow({ row, now, t, onOpen }: RowProps) {
+function WindowStatsRow({ row, now, t, selected, onSelect }: RowProps) {
   const hit = cacheHitRatio(row)
   const occupied = row.projectedTokens !== undefined && row.contextWindow !== undefined && row.contextWindow > 0
     ? Math.round((row.projectedTokens / row.contextWindow) * 100)
@@ -160,25 +186,26 @@ function WindowStatsRow({ row, now, t, onOpen }: RowProps) {
   const time = relativeTime(row.updatedAt, now)
   const activity = time.unit === 'now' ? t('time.now') : t(TIME_UNIT_KEYS[time.unit], { n: time.n })
   const statusLabel = t(statusKeyOf(row))
-  const dot = <StateDot state={stateOf(row)} />
+  const duration = rowDurationMs(row)
 
   return (
     <tr
-      className={css.row}
-      onClick={onOpen}
+      className={selected ? `${css.row} ${css.rowSelected}` : css.row}
+      onClick={onSelect}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault()
-          onOpen()
+          onSelect()
         }
       }}
       tabIndex={0}
       role="row"
+      aria-selected={selected}
       aria-label={t('a11y.openSession', { title: row.title })}
     >
       <td className={css.cellStatus}>
         <span className={css.statusCell}>
-          {dot}
+          <StateDot state={stateOf(row)} />
           <span className={css.visuallyHidden}>{t('a11y.status', { label: statusLabel })}</span>
         </span>
       </td>
@@ -187,15 +214,110 @@ function WindowStatsRow({ row, now, t, onOpen }: RowProps) {
         {row.cwd !== undefined && <span className={css.cwd}>{row.cwd}</span>}
       </td>
       <td className={css.cellProgress}>
-        {row.turns !== undefined && row.steps !== undefined
-          ? `${row.turns} / ${row.steps}`
-          : '–'}
+        {row.turns !== undefined && row.steps !== undefined ? `${row.turns} / ${row.steps}` : '–'}
       </td>
       <td className={css.cellNum}>{row.inputTokens !== undefined ? formatTokens(row.inputTokens) : '–'}</td>
       <td className={css.cellNum}>{row.outputTokens !== undefined ? formatTokens(row.outputTokens) : '–'}</td>
       <td className={css.cellNum}>{hit !== null ? t('value.cacheRatio', { pct: Math.round(hit * 100) }) : '–'}</td>
       <td className={css.cellNum}>{occupied !== null ? t('value.context', { pct: occupied }) : '–'}</td>
+      <td className={css.cellNum}>{duration !== null ? formatDuration(duration) : '–'}</td>
       <td className={css.cellActivity}>{activity}</td>
     </tr>
+  )
+}
+
+interface DetailProps {
+  row: WindowRow
+  t: WindowStatsProps['t']
+  onOpen: () => void
+}
+
+function SessionDetail({ row, t, onOpen }: DetailProps) {
+  const hit = cacheHitRatio(row)
+  const total = row.inputTokens !== undefined ? row.inputTokens + (row.outputTokens ?? 0) : undefined
+  const occupied = row.projectedTokens !== undefined && row.contextWindow !== undefined && row.contextWindow > 0
+    ? Math.round((row.projectedTokens / row.contextWindow) * 100)
+    : null
+  const throughput = decodeThroughput(row)
+  const ttft = ttftAverageMs(row)
+  const duration = rowDurationMs(row)
+
+  return (
+    <div className={css.detail}>
+      <div className={css.detailHead}>
+        <div className={css.detailStatusRow}>
+          <StateDot state={stateOf(row)} />
+          <span className={css.detailStatusText}>{t(statusKeyOf(row))}</span>
+        </div>
+        <div className={css.detailTitle}>{row.title}</div>
+        {row.cwd !== undefined && <div className={css.detailCwd}>{row.cwd}</div>}
+      </div>
+
+      <button type="button" className={css.detailOpen} onClick={onOpen}>{t('detail.open')}</button>
+
+      <div className={css.detailSection}>
+        <div className={css.detailSectionTitle}>{t('detail.tokens')}</div>
+        <TokenBar label={t('detail.uncachedInput')} value={row.uncachedInputTokens} max={total} />
+        <TokenBar label={t('detail.cacheRead')} value={row.cacheReadTokens} max={total} />
+        <TokenBar label={t('detail.cacheWrite')} value={row.cacheWriteTokens} max={total} />
+        <TokenBar label={t('detail.output')} value={row.outputTokens} max={total} />
+        <Kv label={t('detail.total')} value={total !== undefined ? formatTokens(total) : '–'} />
+        <Kv label={t('col.cache')} value={hit !== null ? t('value.cacheRatio', { pct: Math.round(hit * 100) }) : '–'} />
+      </div>
+
+      <div className={css.detailSection}>
+        <div className={css.detailSectionTitle}>{t('detail.context')}</div>
+        {occupied !== null && <OccupancyBar pct={occupied} />}
+        <Kv label={t('detail.occupancy')} value={occupied !== null ? t('value.context', { pct: occupied }) : '–'} />
+        <Kv label={t('detail.system')} value={row.systemTokens !== undefined ? formatTokens(row.systemTokens) : '–'} />
+        <Kv label={t('detail.tools')} value={row.toolsTokens !== undefined ? formatTokens(row.toolsTokens) : '–'} />
+        <Kv label={t('detail.messages')} value={row.messageTokens !== undefined ? formatTokens(row.messageTokens) : '–'} />
+      </div>
+
+      <div className={css.detailSection}>
+        <div className={css.detailSectionTitle}>{t('detail.timing')}</div>
+        <Kv label={t('col.duration')} value={duration !== null ? formatDuration(duration) : '–'} />
+        <Kv label={t('detail.llm')} value={row.llmMs !== undefined ? formatDuration(row.llmMs) : '–'} />
+        <Kv label={t('detail.tool')} value={row.toolMs !== undefined ? formatDuration(row.toolMs) : '–'} />
+        <Kv label={t('detail.ttft')} value={ttft !== null ? t('value.ms', { n: Math.round(ttft) }) : '–'} />
+        <Kv label={t('detail.throughput')} value={throughput !== null ? t('value.tokPerSec', { n: formatOneDecimal(throughput) }) : '–'} />
+      </div>
+
+      <div className={css.detailSection}>
+        <div className={css.detailSectionTitle}>{t('detail.turns')}</div>
+        <Kv label={t('detail.turns')} value={row.turns !== undefined ? String(row.turns) : '–'} />
+        <Kv label={t('detail.steps')} value={row.steps !== undefined ? String(row.steps) : '–'} />
+        <Kv label={t('detail.jobs')} value={String(row.jobsCount)} />
+        <Kv label={t('detail.subagents')} value={String(row.subagentCount)} />
+      </div>
+    </div>
+  )
+}
+
+function Kv({ label, value }: { label: string; value: string }) {
+  return (
+    <div className={css.detailKV}>
+      <span className={css.detailKVLabel}>{label}</span>
+      <span className={css.detailKVValue}>{value}</span>
+    </div>
+  )
+}
+
+function TokenBar({ label, value, max }: { label: string; value: number | undefined; max: number | undefined }) {
+  const v = value ?? 0
+  const pct = max !== undefined && max > 0 ? Math.min(100, (v / max) * 100) : 0
+  return (
+    <div className={css.barRow}>
+      <span className={css.barLabel}>{label}</span>
+      <div className={css.barTrack}><div className={css.barFill} style={{ width: `${pct}%` }} /></div>
+      <span className={css.barValue}>{formatTokens(v)}</span>
+    </div>
+  )
+}
+
+function OccupancyBar({ pct }: { pct: number }) {
+  const clamped = Math.min(100, Math.max(0, pct))
+  return (
+    <div className={css.occTrack}><div className={css.occFill} style={{ width: `${clamped}%` }} /></div>
   )
 }

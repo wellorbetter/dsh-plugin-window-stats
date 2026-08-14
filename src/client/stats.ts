@@ -42,10 +42,18 @@ export interface SessionStatsProjection {
   decodeTokens: number
 }
 
+/** Heuristic composition of the next request's context (never a total). */
+export interface ContextBreakdownProjection {
+  systemTokens: number
+  toolsTokens: number
+  messageTokens: number
+}
+
 declare module '@deepseek-ai/dsh-session-projection/types' {
   interface SessionProjectionMap {
     tokenUsage: TokenUsageProjection
     contextPressure: ContextPressureProjection
+    contextBreakdown: ContextBreakdownProjection
     sessionStats: SessionStatsProjection
   }
 }
@@ -63,12 +71,27 @@ export interface WindowRow {
   updatedAt: number
   turns?: number
   steps?: number
+  uncachedInputTokens?: number
   inputTokens?: number
   outputTokens?: number
   cacheReadTokens?: number
   cacheWriteTokens?: number
   projectedTokens?: number
   contextWindow?: number
+  /** Wall times (ms) from the whole-log `sessionStats` projection. */
+  llmMs?: number
+  toolMs?: number
+  ttftMs?: number
+  ttftSteps?: number
+  decodeMs?: number
+  decodeTokens?: number
+  /** Context composition (heuristic) from `contextBreakdown`. */
+  systemTokens?: number
+  toolsTokens?: number
+  messageTokens?: number
+  /** Background jobs / child subagents mirrored from the session list. */
+  jobsCount: number
+  subagentCount: number
 }
 
 /** Aggregate figures across the derived rows. */
@@ -79,6 +102,9 @@ export interface WindowAggregate {
   outputTokens: number
   cacheReadTokens: number
   cacheWriteTokens: number
+  /** Summed LLM / tool wall time (ms) over rows reporting it. */
+  llmMs: number
+  toolMs: number
   /** Rows that contributed a `tokenUsage` value. */
   counted: number
 }
@@ -111,6 +137,7 @@ export function deriveRow(summary: SessionSummary): WindowRow {
   const usage = summary.projectionValues?.tokenUsage
   const stats = summary.projectionValues?.sessionStats
   const pressure = summary.projectionValues?.contextPressure
+  const breakdown = summary.projectionValues?.contextBreakdown
   return {
     id: summary.id,
     title: summary.displayTitle.length > 0 ? summary.displayTitle : idTail(summary.id),
@@ -120,9 +147,23 @@ export function deriveRow(summary: SessionSummary): WindowRow {
     completed: summary.completed === true,
     blank: summary.blank,
     updatedAt: summary.updatedAt,
-    ...(stats !== undefined ? { turns: stats.turns, steps: stats.steps } : {}),
+    jobsCount: 0,
+    subagentCount: 0,
+    ...(stats !== undefined
+      ? {
+        turns: stats.turns,
+        steps: stats.steps,
+        llmMs: stats.llmMs,
+        toolMs: stats.toolMs,
+        ttftMs: stats.ttftMs,
+        ttftSteps: stats.ttftSteps,
+        decodeMs: stats.decodeMs,
+        decodeTokens: stats.decodeTokens,
+      }
+      : {}),
     ...(usage !== undefined
       ? {
+        uncachedInputTokens: usage.uncachedInputTokens,
         inputTokens: usage.uncachedInputTokens + usage.cacheReadTokens + usage.cacheWriteTokens,
         outputTokens: usage.outputTokens,
         cacheReadTokens: usage.cacheReadTokens,
@@ -133,6 +174,13 @@ export function deriveRow(summary: SessionSummary): WindowRow {
       ? {
         ...(pressure.projectedTokens !== undefined ? { projectedTokens: pressure.projectedTokens } : {}),
         ...(pressure.contextWindow !== undefined ? { contextWindow: pressure.contextWindow } : {}),
+      }
+      : {}),
+    ...(breakdown !== undefined
+      ? {
+        systemTokens: breakdown.systemTokens,
+        toolsTokens: breakdown.toolsTokens,
+        messageTokens: breakdown.messageTokens,
       }
       : {}),
   }
@@ -151,7 +199,10 @@ export function deriveWindowRows(state: SessionListState, opts: DeriveOptions): 
     if (summary === undefined) continue
     if (summary.blank && !opts.includeBlank) continue
     if (summary.origin === 'subagent' && !opts.includeSubagents) continue
-    rows.push(deriveRow(summary))
+    const row = deriveRow(summary)
+    row.jobsCount = state.jobsBySession[id]?.length ?? 0
+    row.subagentCount = state.subagentsByParent[id]?.entries.length ?? 0
+    rows.push(row)
   }
   rows.sort((a, b) => b.updatedAt - a.updatedAt)
   return rows
@@ -183,6 +234,8 @@ export function aggregate(rows: readonly WindowRow[]): WindowAggregate {
   let outputTokens = 0
   let cacheReadTokens = 0
   let cacheWriteTokens = 0
+  let llmMs = 0
+  let toolMs = 0
   let counted = 0
   for (const row of rows) {
     if (row.running) running += 1
@@ -193,8 +246,10 @@ export function aggregate(rows: readonly WindowRow[]): WindowAggregate {
       cacheWriteTokens += row.cacheWriteTokens ?? 0
       counted += 1
     }
+    llmMs += row.llmMs ?? 0
+    toolMs += row.toolMs ?? 0
   }
-  return { total: rows.length, running, inputTokens, outputTokens, cacheReadTokens, cacheWriteTokens, counted }
+  return { total: rows.length, running, inputTokens, outputTokens, cacheReadTokens, cacheWriteTokens, llmMs, toolMs, counted }
 }
 
 /**
@@ -223,6 +278,53 @@ export function formatTokens(n: number): string {
 /** One-decimal formatting with a trailing ".0" removed. */
 function trimTenths(value: number): string {
   const tenths = Math.floor(value * 10) / 10
+  return Number.isInteger(tenths) ? String(tenths) : tenths.toFixed(1)
+}
+
+/**
+ * Human wall-time formatting for a millisecond duration: 45s, 3m 12s, 1h 23m, 2d 5h.
+ * @param ms - non-negative duration in milliseconds.
+ * @returns the formatted string ("–" for non-finite values).
+ */
+export function formatDuration(ms: number): string {
+  if (!Number.isFinite(ms) || ms < 0) return '–'
+  const seconds = Math.round(ms / 1000)
+  if (seconds < 60) return `${seconds}s`
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m ${seconds % 60}s`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ${minutes % 60}m`
+  return `${Math.floor(hours / 24)}d ${hours % 24}h`
+}
+
+/**
+ * Decode throughput in tokens/second over the decode-timed steps.
+ * @param row - the dashboard row.
+ * @returns tokens/second, or null when the row has no decode timing/usage.
+ */
+export function decodeThroughput(row: WindowRow): number | null {
+  if (row.decodeMs === undefined || row.decodeTokens === undefined || row.decodeMs <= 0) return null
+  return (row.decodeTokens / row.decodeMs) * 1000
+}
+
+/**
+ * Average first-token latency across the steps that recorded one.
+ * @param row - the dashboard row.
+ * @returns average TTFT in milliseconds, or null when no step recorded one.
+ */
+export function ttftAverageMs(row: WindowRow): number | null {
+  if (row.ttftMs === undefined || row.ttftSteps === undefined || row.ttftSteps <= 0) return null
+  return row.ttftMs / row.ttftSteps
+}
+
+/**
+ * One-decimal number formatting with a trailing ".0" removed (e.g. 12.3, 5).
+ * @param n - a finite number.
+ * @returns the formatted string.
+ */
+export function formatOneDecimal(n: number): string {
+  if (!Number.isFinite(n)) return '–'
+  const tenths = Math.round(n * 10) / 10
   return Number.isInteger(tenths) ? String(tenths) : tenths.toFixed(1)
 }
 

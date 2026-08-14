@@ -41,6 +41,33 @@ export type WindowStatsKey =
   | 'time.year'
   | 'a11y.openSession'
   | 'a11y.status'
+  | 'col.duration'
+  | 'header.duration'
+  | 'detail.title'
+  | 'detail.empty'
+  | 'detail.open'
+  | 'detail.tokens'
+  | 'detail.uncachedInput'
+  | 'detail.cacheRead'
+  | 'detail.cacheWrite'
+  | 'detail.output'
+  | 'detail.total'
+  | 'detail.context'
+  | 'detail.occupancy'
+  | 'detail.system'
+  | 'detail.tools'
+  | 'detail.messages'
+  | 'detail.timing'
+  | 'detail.llm'
+  | 'detail.tool'
+  | 'detail.ttft'
+  | 'detail.throughput'
+  | 'detail.turns'
+  | 'detail.steps'
+  | 'detail.jobs'
+  | 'detail.subagents'
+  | 'value.tokPerSec'
+  | 'value.ms'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -83,6 +110,33 @@ export const zh: Record<WindowStatsKey, string> = {
   'time.year': '{n} 年',
   'a11y.openSession': '打开会话 {title}',
   'a11y.status': '状态：{label}',
+  'col.duration': '耗时',
+  'header.duration': '耗时',
+  'detail.title': '会话详情',
+  'detail.empty': '点击左侧会话查看详情',
+  'detail.open': '打开会话',
+  'detail.tokens': 'Token 明细',
+  'detail.uncachedInput': '未缓存输入',
+  'detail.cacheRead': '缓存读',
+  'detail.cacheWrite': '缓存写',
+  'detail.output': '输出',
+  'detail.total': '合计',
+  'detail.context': '上下文',
+  'detail.occupancy': '占用',
+  'detail.system': '系统',
+  'detail.tools': '工具',
+  'detail.messages': '消息',
+  'detail.timing': '耗时',
+  'detail.llm': 'LLM',
+  'detail.tool': '工具',
+  'detail.ttft': '首 Token 均值',
+  'detail.throughput': '解码吞吐',
+  'detail.turns': '轮次',
+  'detail.steps': '步数',
+  'detail.jobs': '后台任务',
+  'detail.subagents': '子代理',
+  'value.tokPerSec': '{n} tok/s',
+  'value.ms': '{n} ms',
 }
 
 /** English dictionary. */
@@ -119,4 +173,31 @@ export const en: Record<WindowStatsKey, string> = {
   'time.year': '{n}y',
   'a11y.openSession': 'Open session {title}',
   'a11y.status': 'Status: {label}',
+  'col.duration': 'Duration',
+  'header.duration': 'Duration',
+  'detail.title': 'Session details',
+  'detail.empty': 'Select a session on the left to see details',
+  'detail.open': 'Open session',
+  'detail.tokens': 'Token breakdown',
+  'detail.uncachedInput': 'Uncached input',
+  'detail.cacheRead': 'Cache read',
+  'detail.cacheWrite': 'Cache write',
+  'detail.output': 'Output',
+  'detail.total': 'Total',
+  'detail.context': 'Context',
+  'detail.occupancy': 'Occupancy',
+  'detail.system': 'System',
+  'detail.tools': 'Tools',
+  'detail.messages': 'Messages',
+  'detail.timing': 'Timing',
+  'detail.llm': 'LLM',
+  'detail.tool': 'Tool',
+  'detail.ttft': 'Avg TTFT',
+  'detail.throughput': 'Decode throughput',
+  'detail.turns': 'Turns',
+  'detail.steps': 'Steps',
+  'detail.jobs': 'Background jobs',
+  'detail.subagents': 'Subagents',
+  'value.tokPerSec': '{n} tok/s',
+  'value.ms': '{n} ms',
 }

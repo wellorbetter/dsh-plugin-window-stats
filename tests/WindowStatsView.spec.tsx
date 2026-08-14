@@ -81,11 +81,16 @@ describe('WindowStatsView', () => {
     expect(getAllByRole('row').length).toBe(3) // header + 2 rows
   })
 
-  it('opens a session when a row is activated', () => {
+  it('selects a row, shows its detail, and opens the session from the detail panel', () => {
     const open = vi.fn()
     const rows = [summary({ id: id(7), displayTitle: 'Click me', updatedAt: 1 })]
-    const { getByText } = render(<WindowStatsView {...makeProps(rows, open)} />)
-    fireEvent.click(getByText('Click me'))
+    const { container, getAllByText, getByText } = render(<WindowStatsView {...makeProps(rows, open)} />)
+    // Before selection: detail pane shows the empty hint (fake t renders the key).
+    expect(container.textContent).toContain('detail.empty')
+    // Click the table row (the first "Click me" occurrence is the row title).
+    fireEvent.click(getAllByText('Click me')[0])
+    // The detail pane now renders its "打开会话" button; activating it opens the session.
+    fireEvent.click(getByText('detail.open'))
     expect(open).toHaveBeenCalledWith(id(7))
   })
 

@@ -30,10 +30,17 @@ export interface SessionStatsProjection {
     decodeMs: number;
     decodeTokens: number;
 }
+/** Heuristic composition of the next request's context (never a total). */
+export interface ContextBreakdownProjection {
+    systemTokens: number;
+    toolsTokens: number;
+    messageTokens: number;
+}
 declare module '@deepseek-ai/dsh-session-projection/types' {
     interface SessionProjectionMap {
         tokenUsage: TokenUsageProjection;
         contextPressure: ContextPressureProjection;
+        contextBreakdown: ContextBreakdownProjection;
         sessionStats: SessionStatsProjection;
     }
 }
@@ -50,12 +57,27 @@ export interface WindowRow {
     updatedAt: number;
     turns?: number;
     steps?: number;
+    uncachedInputTokens?: number;
     inputTokens?: number;
     outputTokens?: number;
     cacheReadTokens?: number;
     cacheWriteTokens?: number;
     projectedTokens?: number;
     contextWindow?: number;
+    /** Wall times (ms) from the whole-log `sessionStats` projection. */
+    llmMs?: number;
+    toolMs?: number;
+    ttftMs?: number;
+    ttftSteps?: number;
+    decodeMs?: number;
+    decodeTokens?: number;
+    /** Context composition (heuristic) from `contextBreakdown`. */
+    systemTokens?: number;
+    toolsTokens?: number;
+    messageTokens?: number;
+    /** Background jobs / child subagents mirrored from the session list. */
+    jobsCount: number;
+    subagentCount: number;
 }
 /** Aggregate figures across the derived rows. */
 export interface WindowAggregate {
@@ -65,6 +87,9 @@ export interface WindowAggregate {
     outputTokens: number;
     cacheReadTokens: number;
     cacheWriteTokens: number;
+    /** Summed LLM / tool wall time (ms) over rows reporting it. */
+    llmMs: number;
+    toolMs: number;
     /** Rows that contributed a `tokenUsage` value. */
     counted: number;
 }
@@ -117,6 +142,30 @@ export declare function cacheHitRatio(row: WindowRow): number | null;
  * @returns the formatted string ("–" for non-finite values).
  */
 export declare function formatTokens(n: number): string;
+/**
+ * Human wall-time formatting for a millisecond duration: 45s, 3m 12s, 1h 23m, 2d 5h.
+ * @param ms - non-negative duration in milliseconds.
+ * @returns the formatted string ("–" for non-finite values).
+ */
+export declare function formatDuration(ms: number): string;
+/**
+ * Decode throughput in tokens/second over the decode-timed steps.
+ * @param row - the dashboard row.
+ * @returns tokens/second, or null when the row has no decode timing/usage.
+ */
+export declare function decodeThroughput(row: WindowRow): number | null;
+/**
+ * Average first-token latency across the steps that recorded one.
+ * @param row - the dashboard row.
+ * @returns average TTFT in milliseconds, or null when no step recorded one.
+ */
+export declare function ttftAverageMs(row: WindowRow): number | null;
+/**
+ * One-decimal number formatting with a trailing ".0" removed (e.g. 12.3, 5).
+ * @param n - a finite number.
+ * @returns the formatted string.
+ */
+export declare function formatOneDecimal(n: number): string;
 /** Relative-time bucket for the locale layer. */
 export type RelativeTimeUnit = 'now' | 'min' | 'hour' | 'day' | 'week' | 'month' | 'year';
 /**

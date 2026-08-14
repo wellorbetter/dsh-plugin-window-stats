@@ -4,11 +4,14 @@ import type { SessionId, SessionListState, SessionSummary } from '@deepseek-ai/d
 import {
   aggregate,
   cacheHitRatio,
+  decodeThroughput,
   deriveRow,
   deriveWindowRows,
+  formatDuration,
   formatTokens,
   hiddenSubagentCount,
   relativeTime,
+  ttftAverageMs,
 } from '../src/client/stats.ts'
 
 const id = (n: number): SessionId => `session-${n}` as SessionId
@@ -184,5 +187,32 @@ describe('relativeTime', () => {
     expect(relativeTime(now - 14 * 86_400_000, now)).toEqual({ unit: 'week', n: 2 })
     expect(relativeTime(now - 60 * 86_400_000, now)).toEqual({ unit: 'month', n: 2 })
     expect(relativeTime(now - 400 * 86_400_000, now)).toEqual({ unit: 'year', n: 1 })
+  })
+})
+
+describe('formatDuration', () => {
+  it('formats seconds, minutes, hours, and days', () => {
+    expect(formatDuration(0)).toBe('0s')
+    expect(formatDuration(45_000)).toBe('45s')
+    expect(formatDuration(3 * 60_000 + 12_000)).toBe('3m 12s')
+    expect(formatDuration(1 * 3_600_000 + 23 * 60_000)).toBe('1h 23m')
+    expect(formatDuration(2 * 86_400_000 + 5 * 3_600_000)).toBe('2d 5h')
+    expect(formatDuration(Number.NaN)).toBe('–')
+  })
+})
+
+describe('decodeThroughput / ttftAverageMs', () => {
+  it('computes throughput and average TTFT, null when absent', () => {
+    const row = deriveRow(summary({
+      id: id(1),
+      projectionValues: {
+        sessionStats: { turns: 1, steps: 1, llmMs: 100, toolMs: 50, ttftMs: 300, ttftSteps: 2, decodeMs: 500, decodeTokens: 1000 },
+      },
+    }))
+    expect(decodeThroughput(row)).toBe(2000)
+    expect(ttftAverageMs(row)).toBe(150)
+    const bare = deriveRow(summary({ id: id(2) }))
+    expect(decodeThroughput(bare)).toBeNull()
+    expect(ttftAverageMs(bare)).toBeNull()
   })
 })
