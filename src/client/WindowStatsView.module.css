@@ -38,6 +38,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+.hint {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  padding: 0 2px;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;

@@ -71,7 +71,13 @@ export interface WindowAggregate {
 /** Derivation options. */
 export interface DeriveOptions {
     /** Include blank sessions (default false, matching the sidebar browser). */
-    includeBlank: boolean;
+    includeBlank?: boolean;
+    /**
+     * Include subagent sessions (default false). Subagents are internal child
+     * agents with `origin: 'subagent'`; the sidebar hides them under their
+     * parent's catalog, so the dashboard hides them too by default.
+     */
+    includeSubagents?: boolean;
 }
 /**
  * Derive one row from a `SessionSummary`.
@@ -82,10 +88,17 @@ export declare function deriveRow(summary: SessionSummary): WindowRow;
 /**
  * Derive the ordered dashboard rows from a session-list snapshot.
  * @param state - the `useSessions` snapshot.
- * @param opts - blank filtering (default hides blank rows).
- * @returns non-blank rows sorted by `updatedAt` descending (stable).
+ * @param opts - blank/subagent filtering (defaults hide both).
+ * @returns non-blank, non-subagent rows sorted by `updatedAt` descending (stable).
  */
 export declare function deriveWindowRows(state: SessionListState, opts: DeriveOptions): WindowRow[];
+/**
+ * Count sessions the dashboard hides by default (subagents, plus blank rows
+ * when blank sessions are excluded).
+ * @param state - the `useSessions` snapshot.
+ * @returns the number of hidden subagent sessions.
+ */
+export declare function hiddenSubagentCount(state: SessionListState): number;
 /**
  * Aggregate totals across derived rows.
  * @param rows - the dashboard rows.

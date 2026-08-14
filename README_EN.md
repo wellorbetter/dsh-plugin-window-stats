@@ -29,6 +29,7 @@
 ## ✨ Features
 
 - 🗂️ **All-windows overview**: one row per session — status (running / waiting for approval / waiting for your answer / plan review / completed / idle), title, turns/steps, input/output tokens, cache-hit ratio, context occupancy, and last activity.
+- 🧹 **Hides subagents**: shows only top-level sessions by default, hiding internal child-agent (subagent) sessions so the list isn't flooded by internal work.
 - 📊 **Aggregate header**: total sessions, running count, and summed input/output tokens at a glance.
 - 🖱️ **Click to jump**: activating a row opens that session — no tab hunting.
 - ⚡ **Live updates**: data rides the official projection push (`session/projection` frames); running sessions update without a manual refresh.

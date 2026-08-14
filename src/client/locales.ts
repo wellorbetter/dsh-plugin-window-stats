@@ -28,6 +28,7 @@ export type WindowStatsKey =
   | 'status.planReview'
   | 'empty.title'
   | 'empty.hint'
+  | 'hint.hiddenSubagents'
   | 'value.missing'
   | 'value.cacheRatio'
   | 'value.context'
@@ -69,6 +70,7 @@ export const zh: Record<WindowStatsKey, string> = {
   'status.planReview': '待审计划',
   'empty.title': '暂无会话',
   'empty.hint': '在任意工作区开始对话后，这里会展示其进度与 token 消耗。',
+  'hint.hiddenSubagents': '已隐藏 {n} 个子代理会话',
   'value.missing': '–',
   'value.cacheRatio': '{pct}%',
   'value.context': '~{pct}%',
@@ -104,6 +106,7 @@ export const en: Record<WindowStatsKey, string> = {
   'status.planReview': 'Plan review',
   'empty.title': 'No sessions yet',
   'empty.hint': 'Start a conversation in any workspace to see its progress and token usage here.',
+  'hint.hiddenSubagents': '{n} subagent sessions hidden',
   'value.missing': '–',
   'value.cacheRatio': '{pct}%',
   'value.context': '~{pct}%',

@@ -6,7 +6,7 @@
 /** Dictionary namespace owned by this plugin. */
 export declare const NS = "windowStats";
 /** The window stats dictionary key set (the source of truth for both locales). */
-export type WindowStatsKey = 'view.windowStats' | 'header.sessions' | 'header.running' | 'col.status' | 'col.session' | 'col.progress' | 'col.tokensIn' | 'col.tokensOut' | 'col.cache' | 'col.context' | 'col.activity' | 'status.running' | 'status.idle' | 'status.completed' | 'status.waitingApproval' | 'status.waitingAnswer' | 'status.planReview' | 'empty.title' | 'empty.hint' | 'value.missing' | 'value.cacheRatio' | 'value.context' | 'time.now' | 'time.min' | 'time.hour' | 'time.day' | 'time.week' | 'time.month' | 'time.year' | 'a11y.openSession' | 'a11y.status';
+export type WindowStatsKey = 'view.windowStats' | 'header.sessions' | 'header.running' | 'col.status' | 'col.session' | 'col.progress' | 'col.tokensIn' | 'col.tokensOut' | 'col.cache' | 'col.context' | 'col.activity' | 'status.running' | 'status.idle' | 'status.completed' | 'status.waitingApproval' | 'status.waitingAnswer' | 'status.planReview' | 'empty.title' | 'empty.hint' | 'hint.hiddenSubagents' | 'value.missing' | 'value.cacheRatio' | 'value.context' | 'time.now' | 'time.min' | 'time.hour' | 'time.day' | 'time.week' | 'time.month' | 'time.year' | 'a11y.openSession' | 'a11y.status';
 declare module '@deepseek-ai/dsh-client-ui-slots' {
     interface LocaleNamespaceMap {
         /** The window stats view tab label and table copy. */

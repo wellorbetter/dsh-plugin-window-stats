@@ -7,6 +7,7 @@ import {
   deriveRow,
   deriveWindowRows,
   formatTokens,
+  hiddenSubagentCount,
   relativeTime,
 } from '../src/client/stats.ts'
 
@@ -104,6 +105,31 @@ describe('deriveWindowRows', () => {
       summary({ id: id(2), updatedAt: 300 }),
     ]), { includeBlank: true })
     expect(rows.map(r => r.id)).toEqual([id(2), id(1)])
+  })
+
+  it('filters subagent sessions by default and can include them', () => {
+    const rows = deriveWindowRows(stateOf([
+      summary({ id: id(1), updatedAt: 300, displayTitle: 'top-level' }),
+      summary({ id: id(2), updatedAt: 200, displayTitle: 'subagent', origin: 'subagent' }),
+    ]), { includeBlank: false })
+    expect(rows.map(r => r.id)).toEqual([id(1)])
+
+    const withSubagents = deriveWindowRows(stateOf([
+      summary({ id: id(1), updatedAt: 300, displayTitle: 'top-level' }),
+      summary({ id: id(2), updatedAt: 200, displayTitle: 'subagent', origin: 'subagent' }),
+    ]), { includeBlank: false, includeSubagents: true })
+    expect(withSubagents.map(r => r.id)).toEqual([id(1), id(2)])
+  })
+})
+
+describe('hiddenSubagentCount', () => {
+  it('counts subagent sessions only', () => {
+    const count = hiddenSubagentCount(stateOf([
+      summary({ id: id(1), displayTitle: 'a', origin: 'subagent' }),
+      summary({ id: id(2), displayTitle: 'b', origin: 'subagent' }),
+      summary({ id: id(3), displayTitle: 'c' }),
+    ]))
+    expect(count).toBe(2)
   })
 })
 

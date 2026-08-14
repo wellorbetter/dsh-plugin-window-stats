@@ -17,6 +17,7 @@ import {
   cacheHitRatio,
   deriveWindowRows,
   formatTokens,
+  hiddenSubagentCount,
   relativeTime,
   type RelativeTimeUnit,
   type WindowRow,
@@ -89,6 +90,7 @@ export function WindowStatsView({ useSessions, open, t }: WindowStatsProps) {
   const now = useMemo(() => Date.now(), [state])
   const rows = useMemo(() => deriveWindowRows(state, { includeBlank: false }), [state])
   const totals = useMemo(() => aggregate(rows), [rows])
+  const hiddenSubagents = useMemo(() => hiddenSubagentCount(state), [state])
 
   if (rows.length === 0) {
     return (
@@ -119,6 +121,9 @@ export function WindowStatsView({ useSessions, open, t }: WindowStatsProps) {
           <span className={css.headerValue}>{formatTokens(totals.outputTokens)}</span>
         </span>
       </div>
+      {hiddenSubagents > 0 && (
+        <div className={css.hint}>{t('hint.hiddenSubagents', { n: hiddenSubagents })}</div>
+      )}
       <table className={css.table}>
         <thead>
           <tr>
