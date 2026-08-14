@@ -14,6 +14,14 @@
   white-space: nowrap;
 }
 
+.sidebarSub {
+  margin-left: auto;
+  white-space: nowrap;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
 .dot {
   width: 8px;
   height: 8px;

@@ -38,16 +38,22 @@ type PanelProps = PropsRuntime<'shell.overlay'> & InjectFace<OverviewInjected> &
  */
 export function SidebarSummary({ wide, useSessions, t }: SidebarProps) {
   const state = useSessions(s => s)
-  const totals = useMemo(() => aggregate(deriveWindowRows(state, { includeBlank: false })), [state])
+  const rows = useMemo(() => deriveWindowRows(state, { includeBlank: false }), [state])
+  const totals = useMemo(() => aggregate(rows), [rows])
+  const cost = useMemo(
+    () => rows.reduce((sum, r) => sum + (costUsd(r, DEFAULT_PRICING['deepseek-v4-pro']!) ?? 0), 0),
+    [rows],
+  )
   if (!wide) {
     return <span className={css.sidebarDot} title={`${totals.running} ${t('header.running')}`}>{totals.running}</span>
   }
   return (
-    <div className={css.sidebarRow} title={`${t('header.running')} · ${t('col.tokensIn')}`}>
+    <div className={css.sidebarRow} title={`${t('header.running')} · ${t('col.tokensIn')} · ${t('header.cost')}`}>
       <span className={css.dot} />
       <span className={css.sidebarText}>
-        <b>{totals.running}</b> {t('header.running')} · {formatTokens(totals.inputTokens)}
+        <b>{totals.running}</b> {t('header.running')}
       </span>
+      <span className={css.sidebarSub}>{formatTokens(totals.inputTokens)} · {formatCost(cost)}</span>
     </div>
   )
 }
@@ -62,7 +68,7 @@ export function GlobalOverviewPanel({ useSessions, open, t }: PanelProps) {
   const now = useMemo(() => Date.now(), [state])
   const rows = useMemo(() => deriveWindowRows(state, { includeBlank: false }), [state])
   const totals = useMemo(() => aggregate(rows), [rows])
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(true)
   const running = useMemo(() => rows.filter(r => r.running), [rows])
   const top = useMemo(
     () => [...rows].sort((a, b) => (b.inputTokens ?? -1) - (a.inputTokens ?? -1)).slice(0, 6),
