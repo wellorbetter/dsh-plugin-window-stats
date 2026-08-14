@@ -93,6 +93,14 @@ export type WindowStatsKey =
   | 'filter.idle'
   | 'group.byWorkspace'
   | 'detail.heatmap'
+  | 'range.custom'
+  | 'unit.minutes'
+  | 'unit.hours'
+  | 'unit.days'
+  | 'chart.tokens'
+  | 'chart.toolShare'
+  | 'chart.input'
+  | 'chart.output'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -187,6 +195,14 @@ export const zh: Record<WindowStatsKey, string> = {
   'filter.idle': '空闲',
   'group.byWorkspace': '按工作区',
   'detail.heatmap': 'Token 热力图',
+  'range.custom': '自定义',
+  'unit.minutes': '分钟',
+  'unit.hours': '小时',
+  'unit.days': '天',
+  'chart.tokens': 'Token 趋势',
+  'chart.toolShare': '工具占比',
+  'chart.input': '输入',
+  'chart.output': '输出',
 }
 
 /** English dictionary. */
@@ -275,4 +291,12 @@ export const en: Record<WindowStatsKey, string> = {
   'filter.idle': 'Idle',
   'group.byWorkspace': 'By workspace',
   'detail.heatmap': 'Token heatmap',
+  'range.custom': 'Custom',
+  'unit.minutes': 'min',
+  'unit.hours': 'h',
+  'unit.days': 'd',
+  'chart.tokens': 'Token trend',
+  'chart.toolShare': 'Tool share',
+  'chart.input': 'Input',
+  'chart.output': 'Output',
 }

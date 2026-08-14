@@ -36,6 +36,31 @@
   font-weight: 600;
 }
 
+.customRange {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.customInput {
+  width: 56px;
+  padding: 3px 8px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 6px;
+  background: var(--dsw-alias-button-elevated-fill);
+  color: var(--dsw-alias-label-primary);
+  font-size: 12px;
+}
+
+.customSelect {
+  padding: 3px 6px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 6px;
+  background: var(--dsw-alias-button-elevated-fill);
+  color: var(--dsw-alias-label-primary);
+  font-size: 12px;
+}
+
 .summary {
   display: flex;
   flex-wrap: wrap;
@@ -174,4 +199,59 @@
   color: var(--dsw-alias-label-secondary);
   font-size: 11px;
   font-family: var(--ds-font-family-code, monospace);
+}
+
+/* Token trend chart */
+.chart {
+  width: 100%;
+  height: 120px;
+}
+
+.chartEmpty {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+}
+
+.chartLegend {
+  display: flex;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+/* Tool distribution: donut + rows */
+.toolLayout {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.donutWrap {
+  flex: 0 0 96px;
+}
+
+.donut {
+  width: 96px;
+  height: 96px;
+}
+
+.toolRows {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }

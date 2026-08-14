@@ -30,8 +30,8 @@
 
 - 🗂️ **All-windows overview**: one row per session — status (running / waiting for approval / waiting for your answer / plan review / completed / idle), title, turns/steps, input/output tokens, cache-hit ratio, context occupancy, duration, and last activity.
 - 📋 **Right detail panel**: select any session to expand a multi-dimensional breakdown — token buckets (uncached input / cache read / cache write / output, with proportional bars), context composition (system / tools / messages) plus an occupancy bar, timing (LLM / tool / avg TTFT / decode throughput), and background-job & subagent counts.
-- 📈 **Session Analysis tab**: analyze the current session over a time range (10m / 1h / 1d / all) — tool-type duration distribution (web / bash / read / edit… by count and duration share), and per-turn task summaries (user input + tools used + duration).
-- 💰 **Cost estimation**: estimate per-session USD cost from DeepSeek's official pricing (V4-Flash / V4-Pro switchable; cache-hit / cache-miss / output priced separately).
+- 📈 **Session Analysis tab**: analyze the current session over a time range (10m / 1h / 1d / all / **custom N min·h·d**) — a token trend chart (input/output), tool-type duration distribution (donut + bars), and per-turn task summaries (user input + tools used + duration).
+- 💰 **Cost estimation**: estimate per-session USD cost from DeepSeek's official pricing (V4-Flash / V4-Pro switchable; cache-hit / cache-miss / output priced separately), with **USD / CNY / EUR / GBP / JPY** currency switching.
 - 🗓️ **Token heatmap**: the detail panel renders a per-day token-consumption heatmap (GitHub-style, served by the `tokenHistory` host projection).
 - 🔀 **Group / sort / filter**: group by workspace, sort by activity / input / duration, and filter by status (running / waiting / idle).
 - 🧹 **Hides subagents**: shows only top-level sessions by default, hiding internal child-agent (subagent) sessions so the list isn't flooded by internal work.

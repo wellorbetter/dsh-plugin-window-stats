@@ -201,8 +201,20 @@ export declare const DEFAULT_PRICING: Readonly<Record<string, ModelPricing>>;
  * @returns cost in USD, or null when the row has no usage.
  */
 export declare function costUsd(row: WindowRow, pricing: ModelPricing): number | null;
-/** Format a USD cost compactly: $12.30, $0.45, $0.0234. */
-export declare function formatCost(usd: number): string;
+/** A display currency with its USD exchange rate (units per 1 USD). */
+export interface Currency {
+    code: string;
+    symbol: string;
+    rate: number;
+}
+/** Approximate exchange rates (snapshot 2026-08; update as needed). */
+export declare const CURRENCIES: readonly Currency[];
+/**
+ * Format a USD cost in the given currency: $12.30, ¥88.56, €11.32, ¥1,320.
+ * @param usd - cost in USD.
+ * @param currency - display currency (default USD).
+ */
+export declare function formatCost(usd: number, currency?: Currency): string;
 /** Sort keys for the overview table. */
 export type SortKey = 'activity' | 'inputTokens' | 'duration';
 /** Status filter buckets for the overview table. */

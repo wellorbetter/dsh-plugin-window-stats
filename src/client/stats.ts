@@ -395,13 +395,36 @@ export function costUsd(row: WindowRow, pricing: ModelPricing): number | null {
   return (miss * pricing.inputMiss + hit * pricing.inputHit + output * pricing.output) / 1_000_000
 }
 
-/** Format a USD cost compactly: $12.30, $0.45, $0.0234. */
-export function formatCost(usd: number): string {
+/** A display currency with its USD exchange rate (units per 1 USD). */
+export interface Currency {
+  code: string
+  symbol: string
+  rate: number
+}
+
+/** Approximate exchange rates (snapshot 2026-08; update as needed). */
+export const CURRENCIES: readonly Currency[] = [
+  { code: 'USD', symbol: '$', rate: 1 },
+  { code: 'CNY', symbol: '¥', rate: 7.2 },
+  { code: 'EUR', symbol: '€', rate: 0.92 },
+  { code: 'GBP', symbol: '£', rate: 0.79 },
+  { code: 'JPY', symbol: '¥', rate: 150 },
+]
+
+/**
+ * Format a USD cost in the given currency: $12.30, ¥88.56, €11.32, ¥1,320.
+ * @param usd - cost in USD.
+ * @param currency - display currency (default USD).
+ */
+export function formatCost(usd: number, currency: Currency = CURRENCIES[0]!): string {
   if (!Number.isFinite(usd) || usd < 0) return '–'
-  if (usd >= 100) return `$${usd.toFixed(0)}`
-  if (usd >= 1) return `$${usd.toFixed(2)}`
-  if (usd >= 0.01) return `$${usd.toFixed(3)}`
-  return `$${usd.toFixed(4)}`
+  const amount = usd * currency.rate
+  if (currency.code === 'JPY') return `${currency.symbol}${Math.round(amount)}`
+  let decimals = 2
+  if (amount >= 100) decimals = 0
+  else if (amount < 1) decimals = 3
+  else if (amount < 0.01) decimals = 4
+  return `${currency.symbol}${amount.toFixed(decimals)}`
 }
 
 /** Sort keys for the overview table. */

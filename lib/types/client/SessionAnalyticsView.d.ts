@@ -6,5 +6,5 @@ type Props = ConvViewProps & PropsLocale<typeof NS>;
  * Render the session activity analytics.
  * @param props - the composed slot props.
  */
-export declare function SessionAnalyticsView({ useSession, t }: Props): import("react").JSX.Element;
+export declare function SessionAnalyticsView({ useSession, useProjection, t }: Props): import("react").JSX.Element;
 export {};

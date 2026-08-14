@@ -13,6 +13,7 @@ import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import { StateDot, type StateDotState } from '@deepseek-ai/dsh-client-ui-primitives'
 import { NS } from './locales.ts'
 import {
+  CURRENCIES,
   DEFAULT_PRICING,
   aggregate,
   cacheHitRatio,
@@ -30,6 +31,7 @@ import {
   relativeTime,
   sortRows,
   ttftAverageMs,
+  type Currency,
   type ModelPricing,
   type RelativeTimeUnit,
   type SortKey,
@@ -97,8 +99,10 @@ export function WindowStatsView({ useSessions, open, t }: WindowStatsProps) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [grouped, setGrouped] = useState(false)
   const [modelKey, setModelKey] = useState<ModelKey>('deepseek-v4-pro')
+  const [currencyCode, setCurrencyCode] = useState('USD')
 
   const pricing: ModelPricing = DEFAULT_PRICING[modelKey] ?? DEFAULT_PRICING['deepseek-v4-pro']!
+  const currency: Currency = CURRENCIES.find(c => c.code === currencyCode) ?? CURRENCIES[0]!
 
   const filtered = useMemo(() => filterRows(allRows, statusFilter), [allRows, statusFilter])
   const sorted = useMemo(() => sortRows(filtered, sortKey), [filtered, sortKey])
@@ -161,6 +165,9 @@ export function WindowStatsView({ useSessions, open, t }: WindowStatsProps) {
               {key === 'deepseek-v4-flash' ? 'V4-Flash' : 'V4-Pro'}
             </button>
           ))}
+          <select className={css.select} value={currencyCode} onChange={(e) => { setCurrencyCode(e.target.value) }} aria-label={t('header.cost')}>
+            {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.code} {c.symbol}</option>)}
+          </select>
         </div>
       </div>
 
@@ -170,7 +177,7 @@ export function WindowStatsView({ useSessions, open, t }: WindowStatsProps) {
         <span className={css.headerItem}><span className={css.headerLabel}>{t('col.tokensIn')}</span><span className={css.headerValue}>{formatTokens(totals.inputTokens)}</span></span>
         <span className={css.headerItem}><span className={css.headerLabel}>{t('col.tokensOut')}</span><span className={css.headerValue}>{formatTokens(totals.outputTokens)}</span></span>
         <span className={css.headerItem}><span className={css.headerLabel}>{t('header.duration')}</span><span className={css.headerValue}>{formatDuration(totals.llmMs + totals.toolMs)}</span></span>
-        <span className={css.headerItem}><span className={css.headerLabel}>{t('header.cost')}</span><span className={css.headerValue}>{formatCost(totalCost)}</span></span>
+        <span className={css.headerItem}><span className={css.headerLabel}>{t('header.cost')}</span><span className={css.headerValue}>{formatCost(totalCost, currency)}</span></span>
       </div>
 
       {hiddenSubagents > 0 && (
@@ -197,11 +204,11 @@ export function WindowStatsView({ useSessions, open, t }: WindowStatsProps) {
             <tbody>
               {groups !== null
                 ? groups.map(group => (
-                  <GroupSection key={group.title} group={group} now={now} t={t} pricing={pricing}
+                  <GroupSection key={group.title} group={group} now={now} t={t} pricing={pricing} currency={currency}
                     selectedId={selectedId} onSelect={setSelectedId} />
                 ))
                 : sorted.map(row => (
-                  <WindowStatsRow key={row.id} row={row} now={now} t={t} pricing={pricing}
+                  <WindowStatsRow key={row.id} row={row} now={now} t={t} pricing={pricing} currency={currency}
                     selected={row.id === selectedId} onSelect={() => { setSelectedId(row.id) }} />
                 ))}
             </tbody>
@@ -210,18 +217,19 @@ export function WindowStatsView({ useSessions, open, t }: WindowStatsProps) {
         <aside className={css.detailPane}>
           {selected === null
             ? <div className={css.detailEmpty}>{t('detail.empty')}</div>
-            : <SessionDetail row={selected} t={t} pricing={pricing} onOpen={() => { open(selected.id) }} />}
+            : <SessionDetail row={selected} t={t} pricing={pricing} currency={currency} onOpen={() => { open(selected.id) }} />}
         </aside>
       </div>
     </div>
   )
 }
 
-function GroupSection({ group, now, t, pricing, selectedId, onSelect }: {
+function GroupSection({ group, now, t, pricing, currency, selectedId, onSelect }: {
   group: { title: string; rows: WindowRow[] }
   now: number
   t: WindowStatsProps['t']
   pricing: ModelPricing
+  currency: Currency
   selectedId: SessionId | null
   onSelect: (id: SessionId) => void
 }) {
@@ -229,7 +237,7 @@ function GroupSection({ group, now, t, pricing, selectedId, onSelect }: {
     <>
       <tr className={css.groupRow}><td colSpan={10} className={css.groupTitle}>{group.title === 'ungrouped' ? t('status.idle') : group.title}</td></tr>
       {group.rows.map(row => (
-        <WindowStatsRow key={row.id} row={row} now={now} t={t} pricing={pricing}
+        <WindowStatsRow key={row.id} row={row} now={now} t={t} pricing={pricing} currency={currency}
           selected={row.id === selectedId} onSelect={() => { onSelect(row.id) }} />
       ))}
     </>
@@ -241,11 +249,12 @@ interface RowProps {
   now: number
   t: WindowStatsProps['t']
   pricing: ModelPricing
+  currency: Currency
   selected: boolean
   onSelect: () => void
 }
 
-function WindowStatsRow({ row, now, t, pricing, selected, onSelect }: RowProps) {
+function WindowStatsRow({ row, now, t, pricing, currency, selected, onSelect }: RowProps) {
   const hit = cacheHitRatio(row)
   const occupied = row.projectedTokens !== undefined && row.contextWindow !== undefined && row.contextWindow > 0
     ? Math.round((row.projectedTokens / row.contextWindow) * 100)
@@ -274,7 +283,7 @@ function WindowStatsRow({ row, now, t, pricing, selected, onSelect }: RowProps) 
       <td className={css.cellNum}>{hit !== null ? t('value.cacheRatio', { pct: Math.round(hit * 100) }) : '–'}</td>
       <td className={css.cellNum}>{occupied !== null ? t('value.context', { pct: occupied }) : '–'}</td>
       <td className={css.cellNum}>{duration !== null ? formatDuration(duration) : '–'}</td>
-      <td className={css.cellNum}>{cost !== null ? formatCost(cost) : '–'}</td>
+      <td className={css.cellNum}>{cost !== null ? formatCost(cost, currency) : '–'}</td>
       <td className={css.cellActivity}>{activity}</td>
     </tr>
   )
@@ -284,10 +293,11 @@ interface DetailProps {
   row: WindowRow
   t: WindowStatsProps['t']
   pricing: ModelPricing
+  currency: Currency
   onOpen: () => void
 }
 
-function SessionDetail({ row, t, pricing, onOpen }: DetailProps) {
+function SessionDetail({ row, t, pricing, currency, onOpen }: DetailProps) {
   const hit = cacheHitRatio(row)
   const total = row.inputTokens !== undefined ? row.inputTokens + (row.outputTokens ?? 0) : undefined
   const occupied = row.projectedTokens !== undefined && row.contextWindow !== undefined && row.contextWindow > 0
@@ -316,7 +326,7 @@ function SessionDetail({ row, t, pricing, onOpen }: DetailProps) {
         <TokenBar label={t('detail.output')} value={row.outputTokens} max={total} />
         <Kv label={t('detail.total')} value={total !== undefined ? formatTokens(total) : '–'} />
         <Kv label={t('col.cache')} value={hit !== null ? t('value.cacheRatio', { pct: Math.round(hit * 100) }) : '–'} />
-        <Kv label={t('col.cost')} value={cost !== null ? formatCost(cost) : '–'} />
+        <Kv label={t('col.cost')} value={cost !== null ? formatCost(cost, currency) : '–'} />
       </div>
 
       <div className={css.detailSection}>

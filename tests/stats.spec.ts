@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import type { SessionId, SessionListState, SessionSummary } from '@deepseek-ai/dsh-client-runtime/client'
 import {
+  CURRENCIES,
   aggregate,
   cacheHitRatio,
   costUsd,
@@ -239,6 +240,13 @@ describe('costUsd / formatCost', () => {
     expect(formatCost(12.3)).toBe('$12.30')
     expect(formatCost(0.45)).toBe('$0.450')
     expect(formatCost(0.0234)).toBe('$0.023')
+  })
+
+  it('converts to other currencies', () => {
+    const cny = CURRENCIES.find(c => c.code === 'CNY')!
+    const jpy = CURRENCIES.find(c => c.code === 'JPY')!
+    expect(formatCost(1, cny)).toBe('¥7.20')
+    expect(formatCost(1, jpy)).toBe('¥150')
   })
 })
 

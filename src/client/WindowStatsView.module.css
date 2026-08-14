@@ -78,6 +78,15 @@
   font-weight: 600;
 }
 
+.select {
+  padding: 3px 8px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 6px;
+  background: var(--dsw-alias-button-elevated-fill);
+  color: var(--dsw-alias-label-primary);
+  font-size: 12px;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
