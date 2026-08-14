@@ -71,6 +71,13 @@ function stateOf(row: WindowRow): StateDotState {
   return 'done'
 }
 
+/** CSS class for a row's visible status badge. */
+function statusBadgeClass(row: WindowRow): string {
+  if (row.running) return css.badgeRunning!
+  if (row.pendingInteraction !== undefined) return css.badgeWaiting!
+  return row.completed ? css.badgeDone! : css.badgeIdle!
+}
+
 type TimeKey = 'time.now' | 'time.min' | 'time.hour' | 'time.day' | 'time.week' | 'time.month' | 'time.year'
 const TIME_UNIT_KEYS: Record<RelativeTimeUnit, TimeKey> = {
   now: 'time.now', min: 'time.min', hour: 'time.hour', day: 'time.day',
@@ -275,7 +282,13 @@ function WindowStatsRow({ row, now, t, pricing, currency, selected, onSelect }: 
       aria-selected={selected}
       aria-label={t('a11y.openSession', { title: row.title })}
     >
-      <td className={css.cellStatus}><span className={css.statusCell}><StateDot state={stateOf(row)} /><span className={css.visuallyHidden}>{t('a11y.status', { label: statusLabel })}</span></span></td>
+      <td className={css.cellStatus}>
+        <span className={css.statusCell}>
+          <StateDot state={stateOf(row)} />
+          <span className={`${css.statusBadge} ${statusBadgeClass(row)}`}>{statusLabel}</span>
+          <span className={css.visuallyHidden}>{t('a11y.status', { label: statusLabel })}</span>
+        </span>
+      </td>
       <td className={css.cellTitle}><span className={css.title}>{row.title}</span>{row.cwd !== undefined && <span className={css.cwd}>{row.cwd}</span>}</td>
       <td className={css.cellProgress}>{row.turns !== undefined && row.steps !== undefined ? `${row.turns} / ${row.steps}` : '–'}</td>
       <td className={css.cellNum}>{row.inputTokens !== undefined ? formatTokens(row.inputTokens) : '–'}</td>

@@ -30,9 +30,9 @@
 }
 
 .rangeActive {
-  color: var(--dsw-alias-label-primary);
+  color: #ffffff;
   border-color: var(--dsw-alias-state-business-primary);
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--dsw-alias-state-business-primary);
   font-weight: 600;
 }
 
