@@ -1,44 +1,65 @@
-# dsh-plugin-window-stats
-
 <div align="center">
 
-**一个 DSH Web 插件：在会话视图环里新增「窗口统计」页签，一屏看全所有会话窗口的对话进度与 Token 消耗。**
+# 🪟 dsh-plugin-window-stats
+
+**DSH Web 插件 —— 一屏看全所有会话窗口的对话进度与 Token 消耗。**
+
+<code>全窗口总览</code> · <code>实时刷新</code> · <code>Token 统计</code> · <code>纯只读</code>
 
 [🌏 中文](./README.md) · [English](./README_EN.md)
 
+<p>
+  <a href="https://github.com/wellorbetter/dsh-plugin-window-stats"><img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/wellorbetter/dsh-plugin-window-stats?style=flat-square&color=4176e6"></a>
+  <a href="https://github.com/topics/dsh-plugin"><img alt="dsh-plugin" src="https://img.shields.io/badge/dsh--plugin-DSH%20插件-4176e6?style=flat-square"></a>
+  <a href="./LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-22c55e?style=flat-square"></a>
+  <a href="https://github.com/wellorbetter/dsh-plugin-window-stats"><img alt="GitHub" src="https://img.shields.io/badge/github-源码-0f1115?style=flat-square&logo=github"></a>
+</p>
+
 </div>
 
-![窗口统计](assets/window-stats.png)
+<img src="assets/window-stats-demo.png" alt="窗口统计预览" width="100%">
+
+<details>
+<summary><b>📷 实测截图（真实 DSH GUI）</b></summary>
+
+<img src="assets/window-stats.png" alt="真实环境实测" width="100%">
+
+</details>
 
 ## ✨ 功能一览
 
-- **所有窗口一屏总览**：每个会话一行，展示状态（运行中 / 等待审批 / 等待回答 / 待审计划 / 已完成 / 空闲）、标题、轮次/步数、输入/输出 Token、缓存命中率、上下文占用、最后活动时间。
-- **汇总头部**：会话总数、运行中数量、输入/输出 Token 合计。
-- **点击直达**：点任意行直接打开对应会话。
-- **实时刷新**：数据来自官方 projection 推送（`session/projection` 帧），运行中的窗口自动更新，无需手动刷新。
-- **纯只读、纯本地**：不发起网络请求、不写任何会话数据、无 host 服务、无新增 RPC。
+- 🗂️ **全窗口总览**：每个会话一行，展示状态（运行中 / 等待审批 / 等待回答 / 待审计划 / 已完成 / 空闲）、标题、轮次/步数、输入/输出 Token、缓存命中率、上下文占用、最后活动时间。
+- 📊 **汇总头部**：会话总数、运行中数量、输入/输出 Token 合计，一眼掌握全局。
+- 🖱️ **点击直达**：点任意行直接打开对应会话，无需来回切换。
+- ⚡ **实时刷新**：数据来自官方 projection 推送（`session/projection` 帧），运行中的窗口自动更新，无需手动刷新。
+- 🔒 **纯只读、纯本地**：不发起网络请求、不写任何会话数据、无 host 服务、无新增 RPC。
 
 ## 🚀 安装
 
-```sh
-# 从 npm 安装（发布后）
-dsh plugin --profile web add @wellorbetter/dsh-plugin-window-stats
+> 前置：已装好 DSH（`dsh web` 能正常运行）。
 
+```sh
 # 从 GitHub 安装（预构建 lib/ 已入库，开箱即用，无需 allowBuilds）
 dsh plugin --profile web add github:wellorbetter/dsh-plugin-window-stats
+
+# 从 npm 安装（发布后）
+dsh plugin --profile web add @wellorbetter/dsh-plugin-window-stats
 
 # 本地开发安装
 dsh plugin --profile web add link:<本地路径>
 ```
 
-安装后重启目标 profile（`dsh web`），打开任一会话，顶部视图环即出现「窗口统计」页签。
+装完**重启 `dsh web`**，打开任一会话，顶部视图环即出现「窗口统计」页签。
 
-验证层是否生效：
+<details>
+<summary><b>验证是否生效（可选）</b></summary>
 
 ```sh
 dsh --profile web --dump-config
 # 应出现 "# == @wellorbetter/dsh-plugin-window-stats" 层与 "id: window-stats" 行
 ```
+
+</details>
 
 卸载：
 
@@ -60,6 +81,25 @@ dsh plugin --profile web remove @wellorbetter/dsh-plugin-window-stats
 
 这些 projection 由官方 `dsh-session-stats`、`dsh-token-meter` 在 host 计算，随 `session.list` 行与 `session/projection` push 帧下发（higher-seq-wins）。
 
+## 📁 项目结构
+
+```
+dsh-plugin-window-stats/
+├── src/
+│   ├── index.ts                 # host 半（空 apply）
+│   ├── invariant.ts             # 包级 invariant 伴生
+│   └── client/                  # 浏览器半（"./client" 入口）
+│       ├── index.ts             # inject + apply：注册「窗口统计」页签
+│       ├── stats.ts             # 纯派生：行模型 / 汇总 / 格式化
+│       ├── locales.ts           # zh / en 字典
+│       ├── WindowStatsView.tsx  # 表格视图组件
+│       └── WindowStatsView.module.css
+├── tests/                       # 15 个用例（派生 / 视图 / apply·dispose）
+├── cordis.patch.yml             # bundle 层（id: window-stats）
+├── tsdown.config.ts             # host + client 构建（ModuleLoader 包装 + 纯度门）
+└── lib/                         # 预构建产物（入库以支持 github: 安装）
+```
+
 ## Model Experience
 
 None — 本插件只渲染一个客户端只读视图，读取 host 已计算的 projection；不新增 prompt、message、schema、tool 或任何模型调用。
@@ -76,25 +116,18 @@ pnpm verify      # typecheck + build + test
 pnpm test        # vitest run（15 个用例）
 ```
 
-产物：`lib/index.js`（host 半，空 apply）、`lib/invariant.js`、`lib/client.js`（`window.__ModuleLoader__.load` 包装的浏览器 bundle）。
+产物：`lib/index.js`（host 半）、`lib/invariant.js`、`lib/client.js`（`window.__ModuleLoader__.load` 包装的浏览器 bundle）。
 
 ## 📦 发布到 GitHub（`gh`）
 
 ```sh
-# 1. 初始化仓库并推送（插件目录已含 .gitignore，忽略 node_modules/ 与 lib/）
-#    注意：为支持 github: 安装开箱即用，需把构建好的 lib/ 一并提交入库
 cd plugin
 git init && git add -A && git commit -m "dsh-plugin-window-stats v0.1.0"
 gh repo create dsh-plugin-window-stats --public --source=. --push
-
-# 2. 打上社区 topic（让插件出现在 https://github.com/topics/dsh-plugin）
 gh repo edit wellorbetter/dsh-plugin-window-stats --add-topic dsh-plugin --add-topic dsh --add-topic deepseek
-
-# 3. 安装验证
-dsh plugin --profile web add github:wellorbetter/dsh-plugin-window-stats
 ```
 
-> `lib/` 入库说明：`dsh plugin add github:...` 拉取的是 Git 源码（不是 npm 构建产物）。官方推荐自包含 `prepare` 脚本，但 pnpm ≥10 会拦截 Git 依赖的构建脚本。因此本仓库采用「**预构建 `lib/` 入库**」策略，让 `github:` 安装开箱即用、无需 `allowBuilds`。
+> `lib/` 入库说明：`dsh plugin add github:...` 拉取的是 Git 源码（不是 npm 构建产物）。官方推荐自包含 `prepare` 脚本，但 pnpm ≥10 会拦截 Git 依赖的构建脚本；本仓库采用「预构建 `lib/` 入库」，让 `github:` 安装开箱即用。
 
 ## ⚠️ 已知限制
 
@@ -108,3 +141,7 @@ dsh plugin --profile web add github:wellorbetter/dsh-plugin-window-stats
 
 - Web（`dsh.client.platform: 'web'`）；任意支持 DSH Web GUI 的桌面/服务器环境。
 - 依赖 `@deepseek-ai/*@0.1.0-rc.6` 系列公开契约。
+
+## 📄 License
+
+[MIT](./LICENSE) © 2026 wellorbetter
