@@ -99,17 +99,17 @@ export function SessionAnalyticsView({ useSession, useProjection, t }: Props) {
       </div>
 
       <div className={css.summary}>
-        <Stat label={t('an.summary.toolCalls')} value={String(report.totalToolCalls)} />
-        <Stat label={t('an.summary.toolDuration')} value={formatDuration(report.totalToolMs)} />
-        <Stat label={t('an.summary.turns')} value={String(report.turnCount)} />
+        <Stat label={t('an.summary.toolCalls')} value={String(report.totalToolCalls)} accent="business" />
+        <Stat label={t('an.summary.toolDuration')} value={formatDuration(report.totalToolMs)} accent="warn" />
+        <Stat label={t('an.summary.turns')} value={String(report.turnCount)} accent="success" />
       </div>
 
-      <div className={css.section}>
+      <div className={css.section} data-accent="business">
         <div className={css.sectionTitle}>{t('chart.tokens')}</div>
         <TokenTrendChart history={history} now={now} rangeMs={rangeMs} t={t} />
       </div>
 
-      <div className={css.section}>
+      <div className={css.section} data-accent="warn">
         <div className={css.sectionTitle}>{t('an.tools.title')}</div>
         {report.tools.length === 0
           ? <div className={css.emptyHint}>{t('an.turns.empty')}</div>
@@ -125,7 +125,7 @@ export function SessionAnalyticsView({ useSession, useProjection, t }: Props) {
           )}
       </div>
 
-      <div className={css.section}>
+      <div className={css.section} data-accent="success">
         <div className={css.sectionTitle}>{t('an.turns.title')}</div>
         {report.turns.length === 0
           ? <div className={css.emptyHint}>{t('an.turns.empty')}</div>
@@ -135,9 +135,9 @@ export function SessionAnalyticsView({ useSession, useProjection, t }: Props) {
   )
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, accent }: { label: string; value: string; accent: 'business' | 'warn' | 'success' }) {
   return (
-    <span className={css.stat}>
+    <span className={css.stat} data-accent={accent}>
       <span className={css.statLabel}>{label}</span>
       <span className={css.statValue}>{value}</span>
     </span>

@@ -331,7 +331,7 @@ function SessionDetail({ row, t, pricing, currency, onOpen }: DetailProps) {
 
       <button type="button" className={css.detailOpen} onClick={onOpen}>{t('detail.open')}</button>
 
-      <div className={css.detailSection}>
+      <div className={css.detailSection} data-accent="tokens">
         <div className={css.detailSectionTitle}>{t('detail.tokens')}</div>
         <TokenBar label={t('detail.uncachedInput')} value={row.uncachedInputTokens} max={total} />
         <TokenBar label={t('detail.cacheRead')} value={row.cacheReadTokens} max={total} />
@@ -342,7 +342,7 @@ function SessionDetail({ row, t, pricing, currency, onOpen }: DetailProps) {
         <Kv label={t('col.cost')} value={cost !== null ? formatCost(cost, currency) : '–'} />
       </div>
 
-      <div className={css.detailSection}>
+      <div className={css.detailSection} data-accent="context">
         <div className={css.detailSectionTitle}>{t('detail.context')}</div>
         {occupied !== null && <OccupancyBar pct={occupied} />}
         <Kv label={t('detail.occupancy')} value={occupied !== null ? t('value.context', { pct: occupied }) : '–'} />
@@ -351,7 +351,7 @@ function SessionDetail({ row, t, pricing, currency, onOpen }: DetailProps) {
         <Kv label={t('detail.messages')} value={row.messageTokens !== undefined ? formatTokens(row.messageTokens) : '–'} />
       </div>
 
-      <div className={css.detailSection}>
+      <div className={css.detailSection} data-accent="timing">
         <div className={css.detailSectionTitle}>{t('detail.timing')}</div>
         <Kv label={t('col.duration')} value={duration !== null ? formatDuration(duration) : '–'} />
         <Kv label={t('detail.llm')} value={row.llmMs !== undefined ? formatDuration(row.llmMs) : '–'} />
@@ -360,12 +360,12 @@ function SessionDetail({ row, t, pricing, currency, onOpen }: DetailProps) {
         <Kv label={t('detail.throughput')} value={throughput !== null ? t('value.tokPerSec', { n: formatOneDecimal(throughput) }) : '–'} />
       </div>
 
-      <div className={css.detailSection}>
+      <div className={css.detailSection} data-accent="heatmap">
         <div className={css.detailSectionTitle}>{t('detail.heatmap')}</div>
         <Heatmap history={row.tokenHistory} />
       </div>
 
-      <div className={css.detailSection}>
+      <div className={css.detailSection} data-accent="turns">
         <div className={css.detailSectionTitle}>{t('detail.turns')}</div>
         <Kv label={t('detail.turns')} value={row.turns !== undefined ? String(row.turns) : '–'} />
         <Kv label={t('detail.steps')} value={row.steps !== undefined ? String(row.steps) : '–'} />
