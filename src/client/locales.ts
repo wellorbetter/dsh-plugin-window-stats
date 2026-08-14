@@ -1,0 +1,119 @@
+/**
+ * `windowStats` namespace dictionaries for the 「窗口统计」 (Window Stats) view tab.
+ * Registered with the client locale service via `ctx.locale.register(NS, { zh, en })`.
+ * Product copy is Chinese; code comments are English.
+ */
+
+/** Dictionary namespace owned by this plugin. */
+export const NS = 'windowStats'
+
+/** The window stats dictionary key set (the source of truth for both locales). */
+export type WindowStatsKey =
+  | 'view.windowStats'
+  | 'header.sessions'
+  | 'header.running'
+  | 'col.status'
+  | 'col.session'
+  | 'col.progress'
+  | 'col.tokensIn'
+  | 'col.tokensOut'
+  | 'col.cache'
+  | 'col.context'
+  | 'col.activity'
+  | 'status.running'
+  | 'status.idle'
+  | 'status.completed'
+  | 'status.waitingApproval'
+  | 'status.waitingAnswer'
+  | 'status.planReview'
+  | 'empty.title'
+  | 'empty.hint'
+  | 'value.missing'
+  | 'value.cacheRatio'
+  | 'value.context'
+  | 'time.now'
+  | 'time.min'
+  | 'time.hour'
+  | 'time.day'
+  | 'time.week'
+  | 'time.month'
+  | 'time.year'
+  | 'a11y.openSession'
+  | 'a11y.status'
+
+declare module '@deepseek-ai/dsh-client-ui-slots' {
+  interface LocaleNamespaceMap {
+    /** The window stats view tab label and table copy. */
+    'windowStats': WindowStatsKey
+  }
+}
+
+/** Simplified Chinese dictionary. */
+export const zh: Record<WindowStatsKey, string> = {
+  'view.windowStats': '窗口统计',
+  'header.sessions': '会话',
+  'header.running': '运行中',
+  'col.status': '状态',
+  'col.session': '会话',
+  'col.progress': '进度',
+  'col.tokensIn': '输入 Tokens',
+  'col.tokensOut': '输出 Tokens',
+  'col.cache': '缓存命中',
+  'col.context': '上下文',
+  'col.activity': '最后活动',
+  'status.running': '运行中',
+  'status.idle': '空闲',
+  'status.completed': '已完成',
+  'status.waitingApproval': '等待审批',
+  'status.waitingAnswer': '等待回答',
+  'status.planReview': '待审计划',
+  'empty.title': '暂无会话',
+  'empty.hint': '在任意工作区开始对话后，这里会展示其进度与 token 消耗。',
+  'value.missing': '–',
+  'value.cacheRatio': '{pct}%',
+  'value.context': '~{pct}%',
+  'time.now': '刚刚',
+  'time.min': '{n} 分钟',
+  'time.hour': '{n} 小时',
+  'time.day': '{n} 天',
+  'time.week': '{n} 周',
+  'time.month': '{n} 个月',
+  'time.year': '{n} 年',
+  'a11y.openSession': '打开会话 {title}',
+  'a11y.status': '状态：{label}',
+}
+
+/** English dictionary. */
+export const en: Record<WindowStatsKey, string> = {
+  'view.windowStats': 'Window Stats',
+  'header.sessions': 'Sessions',
+  'header.running': 'Running',
+  'col.status': 'Status',
+  'col.session': 'Session',
+  'col.progress': 'Progress',
+  'col.tokensIn': 'Tokens in',
+  'col.tokensOut': 'Tokens out',
+  'col.cache': 'Cache hit',
+  'col.context': 'Context',
+  'col.activity': 'Last activity',
+  'status.running': 'Running',
+  'status.idle': 'Idle',
+  'status.completed': 'Completed',
+  'status.waitingApproval': 'Waiting for approval',
+  'status.waitingAnswer': 'Waiting for your answer',
+  'status.planReview': 'Plan review',
+  'empty.title': 'No sessions yet',
+  'empty.hint': 'Start a conversation in any workspace to see its progress and token usage here.',
+  'value.missing': '–',
+  'value.cacheRatio': '{pct}%',
+  'value.context': '~{pct}%',
+  'time.now': 'now',
+  'time.min': '{n}min',
+  'time.hour': '{n}h',
+  'time.day': '{n}d',
+  'time.week': '{n}w',
+  'time.month': '{n}mo',
+  'time.year': '{n}y',
+  'a11y.openSession': 'Open session {title}',
+  'a11y.status': 'Status: {label}',
+}

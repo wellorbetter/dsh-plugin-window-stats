@@ -1,0 +1,9 @@
+# dsh-plugin-window-stats bundle layer: inserts the Window Stats plugin row.
+# Applied after dsh-base and dsh-web-app bundle layers; the profile's own
+# cordis.patch.yml and any --patch overlays still come after this layer.
+# The row's client half is discovered from the package's dsh.client manifest
+# by dsh-client-modules; the host half is an empty apply (v1 is client-only).
+
+- insert:
+    - id: window-stats
+      name: '@wellorbetter/dsh-plugin-window-stats'

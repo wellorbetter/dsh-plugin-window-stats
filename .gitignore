@@ -1,0 +1,6 @@
+node_modules/
+*.tsbuildinfo
+
+# lib/ is intentionally committed (not ignored): `dsh plugin add github:...`
+# fetches Git sources, not npm build output, so the pre-built lib/ must ship
+# in-repo for out-of-the-box github: installs (no allowBuilds needed).
