@@ -11,7 +11,7 @@ import type { ConvViewProps } from '@deepseek-ai/dsh-client-ui-conversation/clie
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import { NS } from './locales.ts'
 import { deriveActivity, type ToolActivity, type TurnActivity } from './activity.ts'
-import { formatDuration, relativeTime, type RelativeTimeUnit, type TokenHistoryProjection } from './stats.ts'
+import { formatDuration, formatTokens, relativeTime, type RelativeTimeUnit, type TokenHistoryProjection } from './stats.ts'
 import css from './SessionAnalyticsView.module.css'
 
 type Props = ConvViewProps & PropsLocale<typeof NS>
@@ -156,35 +156,49 @@ function TokenTrendChart({ history, now, rangeMs, t }: { history: TokenHistoryPr
     .sort()
   if (days.length === 0) return <div className={css.chartEmpty}>–</div>
 
+  const series = days.map(key => ({ key, ...history[key]! }))
   let max = 0
-  for (const key of days) {
-    const d = history[key]!
-    const total = d.input + d.output
-    if (total > max) max = total
-  }
-  const W = 620
-  const H = 120
-  const barW = Math.max(3, Math.floor(W / days.length) - 1)
-  const color = 'var(--dsw-alias-state-business-primary)'
+  for (const s of series) max = Math.max(max, s.input, s.output)
+  const scaleMax = max > 0 ? max : 1
+
+  // Fixed, non-stretched canvas (aspect preserved; width is capped in CSS).
+  const W = 520
+  const H = 190
+  const PAD = { top: 14, right: 14, bottom: 26, left: 48 }
+  const plotW = W - PAD.left - PAD.right
+  const plotH = H - PAD.top - PAD.bottom
+  const xOf = (i: number): number => PAD.left + (plotW * (i + 0.5)) / series.length
+  const yOf = (v: number): number => PAD.top + plotH - (v / scaleMax) * plotH
+  const barW = series.length === 1 ? 40 : Math.min(40, (plotW / series.length) * 0.5)
+
+  // Input tokens = bars (light), output tokens = line + dots (solid).
+  const ticks = [0, 0.5, 1].map(f => ({ f, v: scaleMax * f, y: yOf(scaleMax * f) }))
+  const linePath = series.map((s, i) => `${i === 0 ? 'M' : 'L'}${xOf(i).toFixed(1)},${yOf(s.output).toFixed(1)}`).join(' ')
+  const dayLabel = (key: string): string => key.slice(5) // "YYYY-MM-DD" → "MM-DD"
+
   return (
-    <div>
-      <svg className={css.chart} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label={t('chart.tokens')}>
-        {days.map((key, i) => {
-          const d = history[key]!
-          const inH = max > 0 ? (d.input / max) * (H - 6) : 0
-          const outH = max > 0 ? (d.output / max) * (H - 6) : 0
-          const x = i * (barW + 1)
-          return (
-            <g key={key}>
-              <rect x={x} y={H - inH - outH} width={barW} height={Math.max(1, inH)} style={{ fill: color, opacity: 0.5 }} />
-              <rect x={x} y={H - outH} width={barW} height={Math.max(1, outH)} style={{ fill: color }} />
-            </g>
-          )
-        })}
+    <div className={css.chartBox}>
+      <svg className={css.chart} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={t('chart.tokens')}>
+        {ticks.map(tk => (
+          <g key={tk.f}>
+            <line className={css.chartGrid} x1={PAD.left} x2={W - PAD.right} y1={tk.y} y2={tk.y} />
+            <text className={css.chartAxis} x={PAD.left - 6} y={tk.y + 3} textAnchor="end">{formatTokens(tk.v)}</text>
+          </g>
+        ))}
+        {series.map((s, i) => (
+          <rect key={s.key} className={css.chartBar} x={xOf(i) - barW / 2} y={yOf(s.input)} width={barW} height={Math.max(1, PAD.top + plotH - yOf(s.input))} rx={3} />
+        ))}
+        <path className={css.chartLine} d={linePath} />
+        {series.map((s, i) => (
+          <g key={s.key}>
+            <circle className={css.chartDot} cx={xOf(i)} cy={yOf(s.output)} r={3} />
+            <text className={css.chartAxis} x={xOf(i)} y={H - 8} textAnchor="middle">{dayLabel(s.key)}</text>
+          </g>
+        ))}
       </svg>
       <div className={css.chartLegend}>
-        <span className={css.legendItem}><span className={css.legendDot} style={{ background: '#4176e6', opacity: 0.5 }} />{t('chart.input')}</span>
-        <span className={css.legendItem}><span className={css.legendDot} style={{ background: '#4176e6' }} />{t('chart.output')}</span>
+        <span className={css.legendItem}><span className={css.legendBar} />{t('chart.input')}</span>
+        <span className={css.legendItem}><span className={css.legendLine} />{t('chart.output')}</span>
       </div>
     </div>
   )
